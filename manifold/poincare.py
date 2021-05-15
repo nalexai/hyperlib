@@ -1,4 +1,5 @@
 import tensorflow as tf
+from ..utils.math import tanh, atanh_
 
 class PoincareTF():
     def __init__(self, ):

@@ -11,8 +11,8 @@ def poincare_functions():
     manifold = poincare.PoincareTF()
     return manifold
 
-def create_layer():
-    hyp_layer = lin_hyp.LinearHyperbolic()
+def create_layer(units=32, manifold=poincare.PoincareTF(), c=1):
+    hyp_layer = lin_hyp.LinearHyperbolic(units, manifold, c)
     return hyp_layer
 
 def create_optimizer():
