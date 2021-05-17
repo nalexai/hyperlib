@@ -9,6 +9,26 @@ class PoincareTF():
         self.eps = {tf.float32: 4e-3, tf.float64: 1e-5}
 
     def mobius_matvec(self, m, x, c):
+        r"""
+        Generalization for matrix-vector multiplication to hyperbolic space defined as
+        .. math::
+            M \otimes_c x = (1/\sqrt{c}) \tanh\left(
+                \frac{\|Mx\|_2}{\|x\|_2}\tanh^{-1}(\sqrt{c}\|x\|_2)
+            \right)\frac{Mx}{\|Mx\|_2}
+        Parameters
+        ----------
+        m : tensor
+            matrix for multiplication
+        x : tensor
+            point on poincare ball
+        c : float|tensor
+            negative ball curvature
+        Returns
+        -------
+        tensor
+            Mobius matvec result
+        """
+
         sqrt_c = c ** 0.5
         x_norm = tf.norm(x, axis=-1, keepdims=True, ord=2)
         max_num = tf.math.reduce_max(x_norm)
@@ -52,6 +72,24 @@ class PoincareTF():
         return scale * p
 
     def proj(self, x, c):
+        r"""
+        Safe projection on the manifold for numerical stability. This was mentioned in [1]_
+        Parameters
+        ----------
+        x : tensor
+            point on the Poincare ball
+        c : float|tensor
+            ball negative curvature
+        Returns
+        -------
+        tensor
+            projected vector on the manifold
+        References
+        ----------
+        .. [1] Hyperbolic Neural Networks, NIPS2018
+            https://arxiv.org/abs/1805.09112
+        """
+
         x_for_norm = tf.norm(x, axis=-1, keepdims=True, ord=2)
         max_num = tf.math.reduce_max(x_for_norm)
         norm = tf.clip_by_value(x_for_norm, clip_value_min=self.min_norm, clip_value_max=max_num)
