@@ -1,5 +1,5 @@
-import tensorflow
-from keras import tensorflow
+import tensorflow as tf
+from tensorflow import keras
 
 class LinearHyperbolic(keras.layers.Layer):
 
