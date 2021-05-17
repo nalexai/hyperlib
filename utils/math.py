@@ -1,5 +1,9 @@
 import tensorflow as tf
 
+"""
+Tensorflow Math functions with clipping as required for hyperoblic operations.
+"""
+
 def cosh(x, clamp=15):
     return tf.math.cosh(tf.clip_by_value(x, clip_value_min=-clamp, clip_value_max=clamp))
 

@@ -1,7 +1,12 @@
 import tensorflow as tf
 from ..utils.math import tanh, atanh_
 
-class PoincareTF():
+class Poincare():
+
+    """
+    Implementation of the poincare manifold,. This class can be used for mathematical functions on the poincare manifold.
+    """
+
     def __init__(self, ):
         super(PoincareTF, self).__init__()
         self.name = 'PoincareBall'
