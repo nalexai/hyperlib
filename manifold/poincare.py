@@ -57,6 +57,13 @@ class PoincareTF():
 
 
     def expmap0(self, u, c):
+        """Hyperbolic exponential map at zero in the Poincare ball model.
+          Args:
+            u: Tensor of size B x dimension representing tangent vectors.
+            c: Tensor of size 1 representing the absolute hyperbolic curvature.
+          Returns:
+            Tensor of shape B x dimension.
+          """
         sqrt_c = c ** 0.5
         max_num = tf.math.reduce_max(u)
         u_norm = tf.clip_by_value(tf.norm(u, axis=-1, ord= 2, keepdims=True), clip_value_min=self.min_norm, clip_value_max=max_num)
@@ -64,6 +71,13 @@ class PoincareTF():
         return gamma_1
 
     def logmap0(self, p, c):
+        """Hyperbolic logarithmic map at zero in the Poincare ball model.
+        Args:
+          y: Tensor of size B x dimension representing hyperbolic points.
+          c: Tensor of size 1 representing the absolute hyperbolic curvature.
+        Returns:
+          Tensor of shape B x dimension.
+        """
         sqrt_c = c ** 0.5
         p_norm = p.norm(axis=-1, ord=2, keepdims=True)
         max_num = tf.math.reduce_max(p_norm)
