@@ -2,6 +2,11 @@ import tensorflow as tf
 from tensorflow import keras
 
 class RSGD(keras.optimizers.Optimizer):
+
+    """
+    Implmenetation of a Riemannian Stochastic Gradient Descent. This class inherits form the keras Optimizer class.
+    """
+
     def __init__(self, learning_rate=0.01, name="SGOptimizer", **kwargs):
         """Call super().__init__() and use _set_hyper() to store hyperparameters"""
         super().__init__(name, **kwargs)
@@ -16,7 +21,6 @@ class RSGD(keras.optimizers.Optimizer):
             self.add_slot(var, "pv") #previous variable i.e. weight or bias
         for var in var_list:
             self.add_slot(var, "pg") #previous gradient
-
 
     @tf.function
     def _resource_apply_dense(self, grad, var):
@@ -37,11 +41,17 @@ class RSGD(keras.optimizers.Optimizer):
         var.assign(new_var_m)
 
     def rgrad(self, var, grads):
+        """
+        Transforms the gradients to Riemannian space
+        """
         vars_sqnorm = tf.math.reduce_sum(var ** 2, axis=-1, keepdims=True)
         grads = grads * tf.broadcast_to(((1 - vars_sqnorm) ** 2 / 4), tf.shape(grads))
         return grads
 
     def expm(self, p, d_p, normalize=False, lr=None, out=None):
+        """
+        Maps the variable values
+        """
         if lr is not None:
             d_p = tf.math.multiply(d_p, -lr)
         if out is None:
