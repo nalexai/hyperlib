@@ -1,16 +1,19 @@
 import tensorflow as tf
 from tensorflow import keras
 
+
 class RSGD(keras.optimizers.Optimizer):
 
     """
-    Implmenetation of a Riemannian Stochastic Gradient Descent. This class inherits form the keras Optimizer class.
+    Implmentation of a Riemannian Stochastic Gradient Descent. This class inherits form the keras Optimizer class.
     """
 
     def __init__(self, learning_rate=0.01, name="SGOptimizer", **kwargs):
         """Call super().__init__() and use _set_hyper() to store hyperparameters"""
         super().__init__(name, **kwargs)
-        self._set_hyper("learning_rate", kwargs.get("lr", tf.cast(learning_rate, tf.float64))) # handle lr=learning_rate
+        self._set_hyper(
+            "learning_rate", kwargs.get("lr", tf.cast(learning_rate, tf.float64))
+        )  # handle lr=learning_rate
         self._is_first = True
 
     def _create_slots(self, var_list):
@@ -18,9 +21,9 @@ class RSGD(keras.optimizers.Optimizer):
         For each model variable, create the optimizer variable associated with it
         """
         for var in var_list:
-            self.add_slot(var, "pv") #previous variable i.e. weight or bias
+            self.add_slot(var, "pv")  # previous variable i.e. weight or bias
         for var in var_list:
-            self.add_slot(var, "pg") #previous gradient
+            self.add_slot(var, "pg")  # previous gradient
 
     @tf.function
     def _resource_apply_dense(self, grad, var):
@@ -29,7 +32,7 @@ class RSGD(keras.optimizers.Optimizer):
         """
         r_grad = self.rgrad(var, grad)
         r_grad = tf.math.multiply(r_grad, -self.lr)
-        new_var_m =self.expm(var, r_grad)
+        new_var_m = self.expm(var, r_grad)
 
         # slots aren't currently used - they store previous weights and gradients
         pv_var = self.get_slot(var, "pv")
@@ -72,5 +75,5 @@ class RSGD(keras.optimizers.Optimizer):
         base_config = super().get_config()
         return {
             **base_config,
-            "learning_rate": self._serialize_hyperparameter("learning_rate")
+            "learning_rate": self._serialize_hyperparameter("learning_rate"),
         }
