@@ -15,20 +15,16 @@ class Poincare:
         self.eps = {tf.float32: 4e-3, tf.float64: 1e-5}
 
     def mobius_matvec(self, m, x, c):
-        r"""
+        """
         Generalization for matrix-vector multiplication to hyperbolic space defined as
         .. math::
             M \otimes_c x = (1/\sqrt{c}) \tanh\left(
                 \frac{\|Mx\|_2}{\|x\|_2}\tanh^{-1}(\sqrt{c}\|x\|_2)
             \right)\frac{Mx}{\|Mx\|_2}
-        Parameters
-        ----------
-        m : tensor
-            matrix for multiplication
-        x : tensor
-            point on poincare ball
-        c : float|tensor
-            negative ball curvature
+        Args:
+            m : tensor for multiplication
+            x : tensor point on poincare ball
+            c : tensor of size 1 representing the hyperbolic curvature.
         Returns
         -------
         tensor
@@ -68,10 +64,11 @@ class Poincare:
         return gamma_1
 
     def expmap0(self, u, c):
-        """Hyperbolic exponential map at zero in the Poincare ball model.
+        """
+        Hyperbolic exponential map at zero in the Poincare ball model.
           Args:
-            u: Tensor of size B x dimension representing tangent vectors.
-            c: Tensor of size 1 representing the absolute hyperbolic curvature.
+            u: tensor of size B x dimension representing tangent vectors.
+            c: tensor of size 1 representing the hyperbolic curvature.
           Returns:
             Tensor of shape B x dimension.
           """
@@ -86,10 +83,11 @@ class Poincare:
         return gamma_1
 
     def logmap0(self, p, c):
-        """Hyperbolic logarithmic map at zero in the Poincare ball model.
+        """
+        Hyperbolic logarithmic map at zero in the Poincare ball model.
         Args:
-          p: Tensor of size B x dimension representing hyperbolic points.
-          c: Tensor of size 1 representing the absolute hyperbolic curvature.
+          p: tensor of size B x dimension representing hyperbolic points.
+          c: tensor of size 1 representing the hyperbolic curvature.
         Returns:
           Tensor of shape B x dimension.
         """
@@ -103,14 +101,11 @@ class Poincare:
         return scale * p
 
     def proj(self, x, c):
-        r"""
+        """
         Safe projection on the manifold for numerical stability. This was mentioned in [1]_
-        Parameters
-        ----------
-        x : tensor
-            point on the Poincare ball
-        c : float|tensor
-            ball negative curvature
+        Args:
+            x : tensor point on the Poincare ball
+            c : tensor of size 1 representing the hyperbolic curvature.
         Returns
         -------
         tensor
