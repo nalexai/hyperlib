@@ -41,18 +41,27 @@ class TestClass:
             self.test_tensor_shape_2_2_a, self.curvature_tensor
         )
 
+    @pytest.mark.skip(reason="working on a test for this")
+    def test_logmap0(self):
+        result = self.poincare_manifold.logmap0(
+            self.test_tensor_shape_2_2_b, self.curvature_tensor
+        )
+
     def test_proj(self):
         result = self.poincare_manifold.proj(self.test_tensor_shape_2_2_a, 1)
 
     def test_poincare_functions(self):
         manifold = poincare.Poincare()
         assert manifold.name == "PoincareBall"
+        assert manifold.min_norm == 1e-15
 
     def test_create_layer(self, units=32):
         hyp_layer = lin_hyp.LinearHyperbolic(
             units, self.poincare_manifold, self.curvature_tensor
         )
-        return hyp_layer
+        assert hyp_layer.units == units
+        assert hyp_layer.c == self.curvature_tensor
+        assert hyp_layer.manifold == self.poincare_manifold
 
     def test_layer_training(self, units=32):
         x_input = tf.zeros([units, 1])
