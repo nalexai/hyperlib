@@ -1,4 +1,4 @@
-# Hyperbolic Library
+# HyperLib: Hyperbolic Machine Learning Library
 
 ## Background
 This library implements common Neural Network components in the hypberbolic space; this imlementation uses the Poincare model. The implementation of this library uses Tensorflow as a backend and can therefore easily be used with Keras. This library is meant to help Data Scientists, Machine Learning Engineer, Researchers and others to implement hyperbolic neural networks.
@@ -14,8 +14,8 @@ from hyperbolic.nn.layers import lin_hyp
 from hyperbolic.nn.optimizers import rsgd
 
 # Create layers
-hyperbolic_layer_1 = lin_hyp.LinearHyperbolic(32, poincare.PoincareTF(), 1)
-hyperbolic_layer_2 = lin_hyp.LinearHyperbolic(32, poincare.PoincareTF(), 1)
+hyperbolic_layer_1 = lin_hyp.LinearHyperbolic(32, poincare.Poincare(), 1)
+hyperbolic_layer_2 = lin_hyp.LinearHyperbolic(32, poincare.Poincare(), 1)
 output_layer = lin_hyp.LinearHyperbolic(10, poincare.PoincareTF(), 1)
 
 # Create optimizer
