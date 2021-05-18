@@ -17,17 +17,15 @@ class Poincare:
     def mobius_matvec(self, m, x, c):
         """
         Generalization for matrix-vector multiplication to hyperbolic space defined as
-        .. math::
+        math::
             M \otimes_c x = (1/\sqrt{c}) \tanh\left(
                 \frac{\|Mx\|_2}{\|x\|_2}\tanh^{-1}(\sqrt{c}\|x\|_2)
             \right)\frac{Mx}{\|Mx\|_2}
         Args:
-            m : tensor for multiplication
-            x : tensor point on poincare ball
-            c : tensor of size 1 representing the hyperbolic curvature.
+            m : Tensor for multiplication
+            x : Tensor point on poincare ball
+            c : Tensor of size 1 representing the hyperbolic curvature.
         Returns
-        -------
-        tensor
             Mobius matvec result
         """
 
@@ -102,17 +100,17 @@ class Poincare:
 
     def proj(self, x, c):
         """
-        Safe projection on the manifold for numerical stability. This was mentioned in [1]_
+        Safe projection on the manifold for numerical stability. This was mentioned in [1]
+        
         Args:
-            x : tensor point on the Poincare ball
-            c : tensor of size 1 representing the hyperbolic curvature.
-        Returns
-        -------
-        tensor
-            projected vector on the manifold
-        References
-        ----------
-        .. [1] Hyperbolic Neural Networks, NIPS2018
+            x : Tensor point on the Poincare ball
+            c : Tensor of size 1 representing the hyperbolic curvature.
+        
+        Returns:
+            Projected vector on the manifold
+        
+        References:
+            [1] Hyperbolic Neural Networks, NIPS2018
             https://arxiv.org/abs/1805.09112
         """
 
