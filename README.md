@@ -7,11 +7,16 @@ You can also use this library for uses other than neural networks by using the m
 
 ## Example Usage
 
+Install the library
+```
+pip install hyperlib
+```
+
 Creating a hyperbolic neural network using Keras:
 ```
 from tensorflow import keras
-from hyperbolic.nn.layers import lin_hyp
-from hyperbolic.nn.optimizers import rsgd
+from hyperlib.nn.layers import lin_hyp
+from hyperlib.nn.optimizers import rsgd
 from hyperlib.manifold import poincare
 
 # Create layers
@@ -34,6 +39,7 @@ model.compile(
     optimizer=optimizer,
     loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
     metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
+)
 ```
 
 Using math functions on the Poincare ball:
