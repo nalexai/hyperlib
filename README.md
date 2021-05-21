@@ -38,7 +38,7 @@ model.compile(
 
 Using math functions on the Poincare ball:
 ```
-import tensorflowa s tf
+import tensorflow as tf
 from hyperbolic.manifold import poincare
 
 p = poincare.Poincare()
