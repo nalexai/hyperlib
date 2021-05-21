@@ -12,11 +12,12 @@ Creating a hyperbolic neural network using Keras:
 from tensorflow import keras
 from hyperbolic.nn.layers import lin_hyp
 from hyperbolic.nn.optimizers import rsgd
+from hyperlib.manifold import poincare
 
 # Create layers
 hyperbolic_layer_1 = lin_hyp.LinearHyperbolic(32, poincare.Poincare(), 1)
 hyperbolic_layer_2 = lin_hyp.LinearHyperbolic(32, poincare.Poincare(), 1)
-output_layer = lin_hyp.LinearHyperbolic(10, poincare.PoincareTF(), 1)
+output_layer = lin_hyp.LinearHyperbolic(10, poincare.Poincare(), 1)
 
 # Create optimizer
 optimizer = rsgd.RSGD(learning_rate=0.1)
