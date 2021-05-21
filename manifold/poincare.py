@@ -1,5 +1,5 @@
 import tensorflow as tf
-from utils.math import tanh, atanh_
+from ..utils.math import tanh, atanh_
 
 
 class Poincare:
@@ -101,14 +101,14 @@ class Poincare:
     def proj(self, x, c):
         """
         Safe projection on the manifold for numerical stability. This was mentioned in [1]
-        
+
         Args:
             x : Tensor point on the Poincare ball
             c : Tensor of size 1 representing the hyperbolic curvature.
-        
+
         Returns:
             Projected vector on the manifold
-        
+
         References:
             [1] Hyperbolic Neural Networks, NIPS2018
             https://arxiv.org/abs/1805.09112
