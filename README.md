@@ -39,13 +39,13 @@ model.compile(
 Using math functions on the Poincare ball:
 ```
 import tensorflow as tf
-from hyperbolic.manifold import poincare
+from hyperlib.manifold import poincare
 
 p = poincare.Poincare()
 
 # Create two matrices
-a = tf.constant([[5.0,9.4,3.0],[2.0,5.2,8.9])
-b = tf.constant([[4.8,1.0,2.3],[5.1,3.5,7.5])
+a = tf.constant([[5.0,9.4,3.0],[2.0,5.2,8.9],[4.0,7.2,8.9]])
+b = tf.constant([[4.8,1.0,2.3]])
 
 # Matrix multiplication on the Poincare ball
 curvature = 1
