@@ -7,13 +7,15 @@ class LinearHyperbolic(keras.layers.Layer):
     Implementation of a hyperbolic linear layer for a neural network, that inherits from the keras Layer class
     """
 
-    def __init__(self, units, manifold, c, activation=None):
+    def __init__(self, units, manifold, c, activation=None, use_bias=False):
         super().__init__()
         self.units = units
         # TODO make curavature 'self.c' a learnable parameter
         self.c = tf.constant(c, dtype="float64")
         self.manifold = manifold
         self.activation = keras.activations.get(activation)
+        self.use_bias = use_bias
+
 
     def init_weights_matrix(self, input_shape, irange=1e-5):
         """
@@ -32,8 +34,14 @@ class LinearHyperbolic(keras.layers.Layer):
         self.kernel = tf.Variable(
             initial_value=weight_matrix, dtype="float64", trainable=True,
         )
-        # TODO: add bias functionality
-        # self.bias = self.add_weight(name="bias", shape=[self.units],initializer="zeros")
+
+        if self.use_bias:
+            self.bias = self.add_weight(name='bias',
+                                        shape=(self.units),
+                                        initializer='zeros',
+                                        dtype=tf.float64,
+                                        trainable=True)
+
         super().build(batch_input_shape)  # must be at the end
 
     def call(self, inputs):
@@ -44,6 +52,17 @@ class LinearHyperbolic(keras.layers.Layer):
         inputs = tf.cast(inputs, tf.float64)
         mv = self.manifold.mobius_matvec(self.kernel, inputs, self.c)
         res = self.manifold.proj(mv, self.c)
+
+
+        if self.use_bias:
+            # bias = self.manifold.proj_tan0(self.bias.view(1, -1), self.c)
+            hyp_bias = self.manifold.expmap0(self.bias, self.c)
+            hyp_bias = self.manifold.proj(hyp_bias, self.c)
+            res = self.manifold.mobius_add(res, hyp_bias, c=self.c)
+            res = self.manifold.proj(res, self.c)
+
+
+
         return self.activation(res)
 
     def get_config(self):

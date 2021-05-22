@@ -70,5 +70,12 @@ class TestClass:
         )
         output = hyp_layer(x_input)
 
+    def test_layer_training_with_bias(self, units=32):
+        x_input = tf.zeros([units, 1])
+        hyp_layer = lin_hyp.LinearHyperbolic(
+            units, self.poincare_manifold, self.curvature_tensor, use_bias=True
+        )
+        output = hyp_layer(x_input)
+
     def test_create_optimizer(self):
         opt = rsgd.RSGD()
