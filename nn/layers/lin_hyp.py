@@ -55,7 +55,6 @@ class LinearHyperbolic(keras.layers.Layer):
         res = self.manifold.proj(mv, self.c)
 
         if self.use_bias:
-            # bias = self.manifold.proj_tan0(self.bias.view(1, -1), self.c)
             hyp_bias = self.manifold.expmap0(self.bias, self.c)
             hyp_bias = self.manifold.proj(hyp_bias, self.c)
             res = self.manifold.mobius_add(res, hyp_bias, c=self.c)
