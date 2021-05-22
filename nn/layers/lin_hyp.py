@@ -16,7 +16,6 @@ class LinearHyperbolic(keras.layers.Layer):
         self.activation = keras.activations.get(activation)
         self.use_bias = use_bias
 
-
     def init_weights_matrix(self, input_shape, irange=1e-5):
         """
         Custom weight matrix initialisation for this layer
@@ -36,11 +35,13 @@ class LinearHyperbolic(keras.layers.Layer):
         )
 
         if self.use_bias:
-            self.bias = self.add_weight(name='bias',
-                                        shape=(self.units),
-                                        initializer='zeros',
-                                        dtype=tf.float64,
-                                        trainable=True)
+            self.bias = self.add_weight(
+                name="bias",
+                shape=(self.units),
+                initializer="zeros",
+                dtype=tf.float64,
+                trainable=True,
+            )
 
         super().build(batch_input_shape)  # must be at the end
 
@@ -53,15 +54,12 @@ class LinearHyperbolic(keras.layers.Layer):
         mv = self.manifold.mobius_matvec(self.kernel, inputs, self.c)
         res = self.manifold.proj(mv, self.c)
 
-
         if self.use_bias:
             # bias = self.manifold.proj_tan0(self.bias.view(1, -1), self.c)
             hyp_bias = self.manifold.expmap0(self.bias, self.c)
             hyp_bias = self.manifold.proj(hyp_bias, self.c)
             res = self.manifold.mobius_add(res, hyp_bias, c=self.c)
             res = self.manifold.proj(res, self.c)
-
-
 
         return self.activation(res)
 
