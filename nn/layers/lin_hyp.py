@@ -16,20 +16,7 @@ class LinearHyperbolic(keras.layers.Layer):
         self.activation = keras.activations.get(activation)
         self.use_bias = use_bias
 
-    def init_weights_matrix(self, input_shape, irange=1e-5):
-        """
-        Custom weight matrix initialisation for this layer
-        """
-        weights = tf.random.uniform(
-            shape=[input_shape[-1], self.units],
-            minval=-irange,
-            maxval=irange,
-            dtype=tf.float64,
-        )
-        return weights
-
     def build(self, batch_input_shape):
-        weight_matrix = self.init_weights_matrix(batch_input_shape)
         w_init = tf.random_normal_initializer()
         self.kernel = tf.Variable(
             initial_value=w_init(shape=(batch_input_shape[-1], self.units), dtype="float64"), dtype="float64", trainable=True,
