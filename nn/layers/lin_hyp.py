@@ -11,7 +11,7 @@ class LinearHyperbolic(keras.layers.Layer):
         super().__init__()
         self.units = units
         # TODO make curavature 'self.c' a learnable parameter
-        self.c = tf.constant(c, dtype="float64")
+        self.c = tf.Variable([c], dtype="float64")
         self.manifold = manifold
         self.activation = keras.activations.get(activation)
         self.use_bias = use_bias
@@ -30,8 +30,9 @@ class LinearHyperbolic(keras.layers.Layer):
 
     def build(self, batch_input_shape):
         weight_matrix = self.init_weights_matrix(batch_input_shape)
+        w_init = tf.random_normal_initializer()
         self.kernel = tf.Variable(
-            initial_value=weight_matrix, dtype="float64", trainable=True,
+            initial_value=w_init(shape=(batch_input_shape[-1], self.units), dtype="float64"), dtype="float64", trainable=True,
         )
 
         if self.use_bias:
