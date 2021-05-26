@@ -45,7 +45,7 @@ model.compile(
 Using math functions on the Poincare ball:
 ```
 import tensorflow as tf
-from hyperlib.manifold.poince import Poincare
+from hyperlib.manifold.poincare import Poincare
 
 p = Poincare()
 
