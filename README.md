@@ -15,17 +15,17 @@ pip install hyperlib
 Creating a hyperbolic neural network using Keras:
 ```
 from tensorflow import keras
-from hyperlib.nn.layers import lin_hyp
-from hyperlib.nn.optimizers import rsgd
-from hyperlib.manifold import poincare
+from hyperlib.nn.layers.lin_hyp import LinearHyperbolic
+from hyperlib.nn.optimizers.rsgd import RSGD
+from hyperlib.manifold.poince import Poincare
 
 # Create layers
-hyperbolic_layer_1 = lin_hyp.LinearHyperbolic(32, poincare.Poincare(), 1)
-hyperbolic_layer_2 = lin_hyp.LinearHyperbolic(32, poincare.Poincare(), 1)
-output_layer = lin_hyp.LinearHyperbolic(10, poincare.Poincare(), 1)
+hyperbolic_layer_1 = LinearHyperbolic(32, Poincare(), 1)
+hyperbolic_layer_2 = LinearHyperbolic(32, Poincare(), 1)
+output_layer = lin_hyp.LinearHyperbolic(10, Poincare(), 1)
 
 # Create optimizer
-optimizer = rsgd.RSGD(learning_rate=0.1)
+optimizer = RSGD(learning_rate=0.1)
 
 # Create model architecture
 model = tf.keras.models.Sequential([
@@ -45,9 +45,9 @@ model.compile(
 Using math functions on the Poincare ball:
 ```
 import tensorflow as tf
-from hyperlib.manifold import poincare
+from hyperlib.manifold.poince import Poincare
 
-p = poincare.Poincare()
+p = Poincare()
 
 # Create two matrices
 a = tf.constant([[5.0,9.4,3.0],[2.0,5.2,8.9],[4.0,7.2,8.9]])
