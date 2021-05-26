@@ -59,8 +59,6 @@ p.mobius_matvec(a, b, curvature)
 ```
 
 ## TODO:
-- Implement use of a bias in hyperbolic l;ayer
-- Make curvature in the hyperbolic layer a trainable variable
 - Implement an Attention Mechanism
 - Implement a Riemannian Adam Optimizer
 - Remove casting of layer variables to tf.float64
