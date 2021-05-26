@@ -55,4 +55,6 @@ class LinearHyperbolic(keras.layers.Layer):
             **base_config,
             "units": self.units,
             "activation": keras.activations.serialize(self.activation),
+            "manifold": self.manifold,
+            "curvature": self.c
         }
