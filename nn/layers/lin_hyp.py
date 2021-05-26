@@ -7,7 +7,7 @@ class LinearHyperbolic(keras.layers.Layer):
     Implementation of a hyperbolic linear layer for a neural network, that inherits from the keras Layer class
     """
 
-    def __init__(self, units, manifold, c, activation=None, use_bias=False):
+    def __init__(self, units, manifold, c, activation=None, use_bias=True):
         super().__init__()
         self.units = units
         # TODO make curavature 'self.c' a learnable parameter
