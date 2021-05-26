@@ -10,7 +10,6 @@ class LinearHyperbolic(keras.layers.Layer):
     def __init__(self, units, manifold, c, activation=None, use_bias=True):
         super().__init__()
         self.units = units
-        # TODO make curavature 'self.c' a learnable parameter
         self.c = tf.Variable([c], dtype="float64")
         self.manifold = manifold
         self.activation = keras.activations.get(activation)
