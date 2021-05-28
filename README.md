@@ -66,6 +66,9 @@ p.mobius_matvec(a, b, curvature)
 
 ## References
 [1] [Chami, I., Ying, R., Ré, C. and Leskovec, J. Hyperbolic Graph Convolutional Neural Networks. NIPS 2019.](http://web.stanford.edu/~chami/files/hgcn.pdf)
+
 [2] [Nickel, M. and Kiela, D. Poincaré embeddings for learning hierarchical representations. NIPS 2017.](https://papers.nips.cc/paper/2017/hash/59dfa2df42d9e3d41f5b02bfc32229dd-Abstract.html)
+
 [3] [Khrulkov, Mirvakhabova, Ustinova, Oseledets, Lempitsky. Hyperbolic Image Embeddings.](https://arxiv.org/pdf/1904.02239.pdf)
+
 [4] [Wei Peng, Varanka, Mostafa, Shi, Zhao. Hyperbolic Deep Neural Networks: A Survey.](https://arxiv.org/pdf/2101.04562.pdf)
