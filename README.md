@@ -1,5 +1,7 @@
 # HyperLib: Deep learning in the Hyperbolic space
 
+[![PyPI version](https://badge.fury.io/py/hyperlib.svg)](https://badge.fury.io/py/hyperlib)
+
 ## Background
 This library implements common Neural Network components in the hypberbolic space (using the Poincare model). The implementation of this library uses Tensorflow as a backend and can easily be used with Keras and is meant to help Data Scientists, Machine Learning Engineers, Researchers and others to implement hyperbolic neural networks.
 
