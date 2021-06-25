@@ -1,7 +1,6 @@
 import tensorflow as tf
 from ..utils.math import tanh, atanh_
 
-
 class Poincare:
 
     """
@@ -30,17 +29,9 @@ class Poincare:
         """
 
         sqrt_c = c ** 0.5
-        x_norm = tf.norm(x, axis=-1, keepdims=True, ord=2)
-        max_num = tf.math.reduce_max(x_norm)
-        x_norm = tf.clip_by_value(
-            x_norm, clip_value_min=self.min_norm, clip_value_max=max_num
-        )
+        x_norm = self.norm(x)  
         mx = x @ m
-        mx_norm = tf.norm(mx, axis=-1, keepdims=True, ord=2)
-        max_num = tf.math.reduce_max(mx_norm)
-        mx_norm = tf.clip_by_value(
-            mx_norm, clip_value_min=self.min_norm, clip_value_max=max_num
-        )
+        mx_norm = self.norm(mx) 
 
         res_c = (
             tanh(mx_norm / x_norm * atanh_(sqrt_c * x_norm)) * mx / (mx_norm * sqrt_c)
@@ -52,11 +43,27 @@ class Poincare:
         res = tf.where(tf.cast(cond, tf.bool), res_0, res_c)
         return res
 
+    def norm(self, x):
+        """ Euclidean norm of x """ 
+        x_norm = tf.norm(x, axis=-1, ord=2, keepdims=True)
+        max_num = tf.math.reduce_max(x_norm)
+        return tf.clip_by_value(
+            x_norm, 
+            clip_value_min=self.min_norm,
+            clip_value_max=max_num,
+        )
+
+    def lambda_x(self, x, c):
+        """ Poincare conformal factor at x """ 
+        return 2.0 / (1 - c*self.norm(x))
+
     def expmap(self, u, p, c):
+        """ Exponential map of u at p in the Poincare ball """ 
+        u += self.min_norm
         sqrt_c = c ** 0.5
-        u_norm = u.norm(dim=-1, p=2, keepdim=True).clamp_min(self.min_norm)
+        u_norm = self.norm(u)
         second_term = (
-            tanh(sqrt_c / 2 * self._lambda_x(p, c) * u_norm) * u / (sqrt_c * u_norm)
+            tanh(sqrt_c / 2 * self.lambda_x(p, c) * u_norm) * u / (sqrt_c * u_norm)
         )
         gamma_1 = self.mobius_add(p, second_term, c)
         return gamma_1
@@ -72,11 +79,7 @@ class Poincare:
           """
         sqrt_c = c ** 0.5
         max_num = tf.math.reduce_max(u)
-        u_norm = tf.clip_by_value(
-            tf.norm(u, axis=-1, ord=2, keepdims=True),
-            clip_value_min=self.min_norm,
-            clip_value_max=max_num,
-        )
+        u_norm = self.norm(u)
         gamma_1 = tf.math.tanh(sqrt_c * u_norm) * u / (sqrt_c * u_norm)
         return gamma_1
 
@@ -90,11 +93,7 @@ class Poincare:
           Tensor of shape B x dimension.
         """
         sqrt_c = c ** 0.5
-        p_norm = p.norm(axis=-1, ord=2, keepdims=True)
-        max_num = tf.math.reduce_max(p_norm)
-        p_norm = tf.clip_by_value(
-            p_norm, clip_value_min=self.min_norm, clip_value_max=max_num
-        )
+        p_norm = self.norm(p) 
         scale = 1.0 / sqrt_c * artanh(sqrt_c * p_norm) / p_norm
         return scale * p
 
@@ -114,14 +113,10 @@ class Poincare:
             https://arxiv.org/abs/1805.09112
         """
 
-        x_for_norm = tf.norm(x, axis=-1, keepdims=True, ord=2)
-        max_num = tf.math.reduce_max(x_for_norm)
-        norm = tf.clip_by_value(
-            x_for_norm, clip_value_min=self.min_norm, clip_value_max=max_num
-        )
+        x_norm = self.norm(x)
         maxnorm = (1 - self.eps[x.dtype]) / (c ** 0.5)  # tf.math.reduce_max(x)
-        cond = norm > maxnorm
-        projected = x / norm * maxnorm
+        cond = x_norm > maxnorm
+        projected = x / x_norm * maxnorm
         return tf.where(cond, projected, x)
 
     def mobius_add(self, x, y, c):
