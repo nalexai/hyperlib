@@ -1,79 +1,77 @@
 import tensorflow as tf
-from tensorflow import keras
+from tensorflow.python.keras.optimizer_v2 import optimizer_v2
+from tensorflow.python.util.tf_export import keras_export
+from tensorflow.python.ops import control_flow_ops, state_ops, math_ops
+from ...utils import math as hmath
 
+@keras_export("keras.optimizers.RSGD")
+class RSGD(optimizer_v2.OptimizerV2):
+    """
+    Riemannian Stochastic Gradient Descent for the Poincare Ball model of
+    hyperbolic space with curvature -c, (c > 0).
+    Args:
+        curvature (float): absolute value of the curvature
+        retract (bool): if True use linear retraction instead of exp
 
-class RSGD(keras.optimizers.Optimizer):
+    Update weights as 
+        x <- exp_x( -lr * rgrad)
+    where rgrad is the Riemannian gradient and exp_x is the exponential map at x.
+
+    If retract is True then exp is approximated with retraction. The update becomes 
+        x <- x - lr * rgrad
 
     """
-    Implmentation of a Riemannian Stochastic Gradient Descent. This class inherits form the keras Optimizer class.
-    """
-
-    def __init__(self, learning_rate=0.01, name="SGOptimizer", **kwargs):
-        """Call super().__init__() and use _set_hyper() to store hyperparameters"""
-        super().__init__(name, **kwargs)
+    #TODO: Add momentum
+    _HAS_AGGREGATE_GRAD = True
+    def __init__(self, learning_rate=1e-3, 
+                curvature = 1.0,
+                retract=False,
+                name="RSGD", 
+                **kwargs):
+        super(RSGD, self).__init__(name, **kwargs)
         self._set_hyper(
-            "learning_rate", kwargs.get("lr", tf.cast(learning_rate, tf.float64))
-        )  # handle lr=learning_rate
-        self._is_first = True
+            "learning_rate", 
+            kwargs.get("lr", tf.cast(learning_rate, tf.float64)) # handle lr=learning_rate
+            )
+        self._lr = learning_rate
+        self.retract = retract
+        self.c = curvature  
 
-    def _create_slots(self, var_list):
-        """
-        For each model variable, create the optimizer variable associated with it
-        """
-        for var in var_list:
-            self.add_slot(var, "pv")  # previous variable i.e. weight or bias
-        for var in var_list:
-            self.add_slot(var, "pg")  # previous gradient
-
-    @tf.function
     def _resource_apply_dense(self, grad, var):
-        """
-        Update the slots and perform one optimization step for one model variable
-        """
+        var_dtype = var.dtype.base_dtype
+        lr_t = math_ops.cast(self._lr,var_dtype) 
         r_grad = self.rgrad(var, grad)
-        r_grad = tf.math.multiply(r_grad, -self.lr)
-        new_var_m = self.expm(var, r_grad)
+        r_grad = tf.math.multiply(r_grad, -lr_t)
+        if self.retract:
+            var_t = hmath.proj(tf.math.add(var, r_grad), self.c)
+        else:
+            var_t = hmath.expmap(r_grad, var, self.c)
+        var_update = state_ops.assign(var, var_t, use_locking=self._use_locking)
+        return control_flow_ops.group(var_update)
 
-        # slots aren't currently used - they store previous weights and gradients
-        pv_var = self.get_slot(var, "pv")
-        pg_var = self.get_slot(var, "pg")
-        pv_var.assign(var)
-        pg_var.assign(grad)
-        # assign new weights
-
-        var.assign(new_var_m)
+    def _resource_apply_sparse(self, grad, var, indices):
+        var_dtype = var.dtype.base_dtype
+        lr_t = math_ops.cast(self._lr, var_dtype) 
+        rgrad = self.rgrad(tf.gather(var,indices), grad)
+        var_t = self._resource_scatter_add(var,indices, -lr_t * rgrad)
+        
+        # use retraction (exp needs the whole gradient)
+        var_update = state_ops.assign(var, 
+                            hmath.proj(var_t, self.c),
+                            use_locking=self._use_locking)
+        return control_flow_ops.group(var_update) 
 
     def rgrad(self, var, grads):
-        """
-        Transforms the gradients to Riemannian space
-        """
-        vars_sqnorm = tf.math.reduce_sum(var ** 2, axis=-1, keepdims=True)
-        grads = grads * tf.broadcast_to(((1 - vars_sqnorm) ** 2 / 4), tf.shape(grads))
-        return grads
-
-    def expm(self, p, d_p, normalize=False, lr=None, out=None):
-        """
-        Maps the variable values
-        """
-        if lr is not None:
-            d_p = tf.math.multiply(d_p, -lr)
-        if out is None:
-            out = p
-        p = tf.math.add(p, d_p)
-        if normalize:
-            self.normalize(p)
-        return p
-
-    def normalize(self, u):
-        d = u.shape[-1]
-        if self.max_norm:
-            u = tf.reshape(u, [-1, d])
-            u.renorm_(2, 0, self.max_norm)
-        return u
+        """Transforms the gradients to hyperbolic space"""
+        scalars = tf.math.divide(1.0, hmath.lambda_x(var, self.c))
+        scalars = tf.broadcast_to(tf.math.square(scalars), tf.shape(grads))
+        return tf.math.multiply(scalars,grads)
 
     def get_config(self):
         base_config = super().get_config()
         return {
             **base_config,
+            "curvature": self.c,
             "learning_rate": self._serialize_hyperparameter("learning_rate"),
+            "retract": self.retract 
         }

@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow import keras
-import ..utils.hmath as hm 
+import ..utils.math as hmath
 
 class LinearHyperbolic(keras.layers.Layer):
     """
@@ -37,14 +37,14 @@ class LinearHyperbolic(keras.layers.Layer):
         """
         # TODO: remove casting and instead recommend setting default tfd values to float64
         inputs = tf.cast(inputs, tf.float64)
-        mv = hm.mobius_matvec(self.kernel, inputs, self.c)
-        res = hm.proj(mv, self.c)
+        mv = hmath.mobius_matvec(self.kernel, inputs, self.c)
+        res = hmath.proj(mv, self.c)
 
         if self.use_bias:
-            hyp_bias = hm.expmap0(self.bias, self.c)
-            hyp_bias = hm.proj(hyp_bias, self.c)
-            res = hm.mobius_add(res, hyp_bias, c=self.c)
-            res = hm.proj(res, self.c)
+            hyp_bias = hmath.expmap0(self.bias, self.c)
+            hyp_bias = hmath.proj(hyp_bias, self.c)
+            res = hmath.mobius_add(res, hyp_bias, c=self.c)
+            res = hmath.proj(res, self.c)
 
         return self.activation(res)
 
