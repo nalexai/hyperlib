@@ -1,8 +1,8 @@
 import tensorflow as tf
 from ..utils.math import tanh, atanh_
+from .base import Manifold
 
-
-class Poincare:
+class Poincare(Manifold):
 
     """
     Implementation of the poincare manifold,. This class can be used for mathematical functions on the poincare manifold.
@@ -90,12 +90,12 @@ class Poincare:
           Tensor of shape B x dimension.
         """
         sqrt_c = c ** 0.5
-        p_norm = p.norm(axis=-1, ord=2, keepdims=True)
+        p_norm = tf.norm(p, axis=-1, ord=2, keepdims=True)
         max_num = tf.math.reduce_max(p_norm)
         p_norm = tf.clip_by_value(
             p_norm, clip_value_min=self.min_norm, clip_value_max=max_num
         )
-        scale = 1.0 / sqrt_c * artanh(sqrt_c * p_norm) / p_norm
+        scale = 1.0 / sqrt_c * atanh_(sqrt_c * p_norm) / p_norm
         return scale * p
 
     def proj(self, x, c):
@@ -140,3 +140,9 @@ class Poincare:
         num = (1 + 2 * cxy + cy2) * x + (1 - cx2) * y
         denom = 1 + 2 * cxy + cx2 * cy2
         return self.proj(num / tf.maximum(denom, self.min_norm), c)
+
+
+    def hyp_act(self, act, x, c_in, c_out):
+        """Apply an activation function to a tensor in the hyperbolic space"""
+        xt = act(self.logmap0(x, c=c_in))
+        return self.proj(self.expmap0(xt, c=c_out), c=c_out)
