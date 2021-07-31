@@ -46,7 +46,7 @@ rsgd = rsgd.RSGD(learning_rate=1)
 model = Sequential()
 model.add(Embedding(max_features, 128))
 model.add(RNN(hyp_rnn_cell), )
-model.add(Dense(1, activation='sigmoid'))
+model.add(lin_hyp.LinearHyperbolic(1, poincare.Poincare(), 1, activation='sigmoid', use_bias=True))
 
 # try using different optimizers and different optimizer configs
 model.compile(loss='binary_crossentropy',
