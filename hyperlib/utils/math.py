@@ -14,14 +14,12 @@ def tanh(x, clamp=15):
     return tf.math.tanh(tf.clip_by_value(x, clip_value_min=-clamp, clip_value_max=clamp))
 
 def arcosh(x):
-    x = tf.clip_by_value(x, clip_value_min=-1 + 1e-15, clip_value_max=1 - 1e-15)
-    return tf.math.acosh(x)
+    return Arcosh.apply(x)
 
-def asinh(x):
-    x = tf.clip_by_value(x, clip_value_min=-1 + 1e-15, clip_value_max=1 - 1e-15)
-    return tf.math.asinh(x)
+def arsinh(x):
+    return Arsinh.apply(x)
 
-def atanh(x):
+def atanh_(x):
     x = tf.clip_by_value(x, clip_value_min=-1 + 1e-15, clip_value_max=1 - 1e-15)
     return tf.math.atanh(x)
 

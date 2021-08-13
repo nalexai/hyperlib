@@ -47,8 +47,7 @@ class LinearHyperbolic(keras.layers.Layer):
             res = self.manifold.mobius_add(res, hyp_bias, c=self.c)
             res = self.manifold.proj(res, self.c)
 
-        return self.manifold.hyp_act(self.activation, res, c_in=self.c, c_out=self.c)
-
+        return self.activation(res)
 
     def get_config(self):
         base_config = super().get_config()
