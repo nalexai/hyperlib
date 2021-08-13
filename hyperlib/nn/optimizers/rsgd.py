@@ -32,7 +32,7 @@ class RSGD(keras.optimizers.Optimizer):
         """
         r_grad = self.rgrad(var, grad)
         r_grad = tf.math.multiply(r_grad, -self.lr)
-        new_var_m = self.expm(var, r_grad)
+        hyp_var_m = self.expm(var, r_grad)
 
         # slots aren't currently used - they store previous weights and gradients
         pv_var = self.get_slot(var, "pv")
@@ -41,7 +41,7 @@ class RSGD(keras.optimizers.Optimizer):
         pg_var.assign(grad)
         # assign new weights
 
-        var.assign(new_var_m)
+        var.assign(hyp_var_m)
 
     def rgrad(self, var, grads):
         """

@@ -1,8 +1,8 @@
 import tensorflow as tf
-from ..utils.math import tanh, atanh_
+from ..utils.math import tanh, atanh, asinh
+from .base import Manifold
 
-
-class Poincare:
+class Poincare(Manifold):
 
     """
     Implementation of the poincare manifold,. This class can be used for mathematical functions on the poincare manifold.
@@ -43,7 +43,7 @@ class Poincare:
         )
 
         res_c = (
-            tanh(mx_norm / x_norm * atanh_(sqrt_c * x_norm)) * mx / (mx_norm * sqrt_c)
+            tanh(mx_norm / x_norm * atanh(sqrt_c * x_norm)) * mx / (mx_norm * sqrt_c)
         )
         cond = tf.reduce_prod(
             tf.cast((mx == 0), tf.uint8, name=None), axis=-1, keepdims=True
@@ -90,12 +90,12 @@ class Poincare:
           Tensor of shape B x dimension.
         """
         sqrt_c = c ** 0.5
-        p_norm = p.norm(axis=-1, ord=2, keepdims=True)
+        p_norm = tf.norm(p, axis=-1, ord=2, keepdims=True)
         max_num = tf.math.reduce_max(p_norm)
         p_norm = tf.clip_by_value(
             p_norm, clip_value_min=self.min_norm, clip_value_max=max_num
         )
-        scale = 1.0 / sqrt_c * artanh(sqrt_c * p_norm) / p_norm
+        scale = 1.0 / sqrt_c * atanh(sqrt_c * p_norm) / p_norm
         return scale * p
 
     def proj(self, x, c):
@@ -140,3 +140,31 @@ class Poincare:
         num = (1 + 2 * cxy + cy2) * x + (1 - cx2) * y
         denom = 1 + 2 * cxy + cx2 * cy2
         return self.proj(num / tf.maximum(denom, self.min_norm), c)
+
+
+    def hyp_act(self, act, x, c_in, c_out):
+        """Apply an activation function to a tensor in the hyperbolic space"""
+        xt = act(self.logmap0(x, c=c_in))
+        return self.proj(self.expmap0(xt, c=c_out), c=c_out)
+
+    def _hyperbolic_softmax(self, X, A, P, c):
+        """𝑝(𝑦 = 𝑘, 𝑥) ∝ 𝑒𝑥 𝑝(𝑠𝑖𝑔𝑛(< 𝑎𝑘 , −𝑞𝑎𝑘 ,𝑟𝑘 + 𝑥 >)||𝑎𝑘 ||𝑑(𝑥, Hˆ𝑎𝑘 ,𝑟𝑘))"""
+        # lambda_pkc = 2 / (1 - c * P.pow(2).sum(dim=1))
+        lambda_pkc =  2 / (1 - c * tf.reduce_sum(P * P, axis=1))
+        print(lambda_pkc)
+        # k = lambda_pkc * torch.norm(A, dim=1) / c ** 0.5
+
+        k = lambda_pkc * tf.norm(A, axis=1, ord=2) / c ** 0.5
+        print(k)
+        mob_add = self.mobius_add(-P, X, c)
+        # num = 2 * c ** 0.5 * torch.sum(mob_add * A.unsqueeze(1), dim=-1)
+        num = 2 * c ** 0.5 * tf.reduce_sum(mob_add * tf.expand_dims(A, 1), axis=1)
+        print(num)
+        # denom = torch.norm(A, dim=1, keepdim=True) * (1 - c * mob_add.pow(2).sum(dim=2))
+        denom = tf.norm(A, axis=1, keepdims=True, ord=2) * (1 - c * tf.reduce_sum(mob_add * mob_add, axis=2))
+        print(denom)
+        logit = tf.expand_dims(k, 1) * asinh(num / denom)
+        print(logit)
+        return tf.transpose(logit, perm=[1,0])
+
+
