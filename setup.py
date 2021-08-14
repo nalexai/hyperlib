@@ -1,4 +1,5 @@
-from setuptools import setup, Extension, find_packages 
+from distutils.core import setup, Extension
+from setuptools import find_packages
 from glob import glob
 from pybind11 import get_cmake_dir
 import sys
@@ -10,7 +11,7 @@ ext_modules = [
         sorted(glob("hyperlib/embedding/src/*.cc")),
         include_dirs = ["hyperlib/embedding/include", "pybind11/include"],
         language = "c++",
-        extra_compile_args = ["-std=c++11", "-stdlib=libc++"],
+        extra_compile_args = ["-std=c++11"],
         ),
 ]
 
