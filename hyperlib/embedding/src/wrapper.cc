@@ -38,11 +38,9 @@ PYBIND11_MODULE(_embedding,m){
 		.def("adj_list", &Graph::adj_list)
 		.def("remove_edge", &Graph::remove_edge)
 		.def("retract", &Graph::retract)
-		.def("remove_vertex", &Graph::remove_vertex)
-		.def("save", &Graph::to_mtx);
+		.def("remove_vertex", &Graph::remove_vertex);
 
 	m.def("graph_metric", &py_metric);
-	m.def("load_graph", &graph_from_mtx);
 	m.def("treerep_graph", &py_graph_treerep, 
 			py::arg("G"), py::arg("tol")=0.1);
 	m.def("treerep", &py_treerep,

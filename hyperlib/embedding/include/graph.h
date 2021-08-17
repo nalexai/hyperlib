@@ -41,6 +41,8 @@ typedef std::vector<int>::const_iterator const_vitr;
  *			Return dimension of the matrix
  *		double max()
  *			Return max value in matrix	
+ *		std::vector<double> data()
+ *			Return a copy of the compressed matrix
  */
 class DistMat{
 	public:
@@ -54,8 +56,6 @@ class DistMat{
 		double max() const;
 		const_vitr nearest(int i, const std::vector<int>& pts) const; 
 		int size() const; 
-		void print() const; 
-		int to_mtx(std::string file);
 		std::vector<double> data();
 	private:
 		int _N;
@@ -103,55 +103,13 @@ class Graph{
 		vmap adj_list();
 
 		DistMat metric(double tol=0.1) const;
-		DistMat tree_metric() const;
-		double mean_avg_precision(const DistMat& D) const;
 		int size() const;
 		int num_edges() const;
-		void print() const;
-		int to_mtx(std::string file);
 		void relabel(int u, int v);
 	private:
 		void _rm(int u, int v);
 		void _insert(int u, int v);
 		vmap _adj;
 };
-
-/**
- * Calculate average distortion between N-point metrics 
- * 		@param D1, D2: DistMats representing the pairwise distances between N points. 
- * 						N = D1.size() <= D2.size() is allowed in which case 
- * 						only the first N columns of D2 are used.
- */
-double avg_distortion(const DistMat& D1, const DistMat& D2);
-
- /* ======== MTX file utilities =========
- * For format spec see https://math.nist.gov/MatrixMarket/formats.html#MMformat 
- */
-#define MTX_GRAPH_HDR "%MatrixMarket matrix coordinate pattern symmetric"
-#define MTX_SYM_HDR "%MatrixMarket matrix coordinate real symmetric"
-
-/**
- * int Graph::to_mtx(std::string file)
- * 		Write graph to mtx file as a `coordinate pattern symmetric' matrix
- * 		@param file: file name
- * 		@returns: 0 if successful, otherwise 1
- * 	int DistMat::to_mtx(std::string file)
- * 		Write matrix to mtx as `coordinate real symmetric' matrix
- * 		@returns: 0 if successful, otherwise 1 
- */
-
-/** 
- * Load graph from mtx file
- * 		@param file: file with `coordinate pattern symmetric' matrix
- * 		@throws: runtime error if file is wrong format
- */
-Graph graph_from_mtx(std::string file);
-
-/**
- * Load DistMat from mtx file
- * 		@param file: file with `coordinate real symmetric' matrix 
- * 		@thows runtime error if file is wrong format 
- */
-DistMat mat_from_mtx(std::string file);
 
 #endif

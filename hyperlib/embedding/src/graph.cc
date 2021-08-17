@@ -34,13 +34,6 @@ void Graph::remove_edge(int u, int v){
 	}
 }
 
-void vprint(const std::vector<int>& vec){
-	for (std::vector<int>::const_iterator i = vec.begin(); i!= vec.end(); ++i){
-		std::cout << *i << " ";
-	}
-	std::cout << std::endl;
-}
-
 void Graph::retract(int u, int v){
 	vmap::iterator fd = _adj.find(v);
 	if (fd == _adj.end() || _adj[v].empty()){
@@ -73,19 +66,6 @@ inline void Graph::_insert(int u, int v){
 	}else if( *it != v){
 		_adj[u].insert(it,v);
 	}
-}
-
-void Graph::print() const{
-	std::cout << "======= GRAPH =======" << std::endl;
-    for (vmap::const_iterator i=_adj.begin(); i != _adj.end(); ++i){
-        std::cout << i->first << " :  ";
-		const_vitr j;
-		for (j = i->second.begin(); j != i->second.end(); ++j){
-			std::cout << *j << " ";
-		}
-		std::cout << std::endl;
-    }
-    std::cout << "\n";
 }
 
 inline std::vector<int> Graph::neighbors(int u){
@@ -140,106 +120,6 @@ int Graph::num_edges() const{
 		len += (it->second).size();
 	}
 	return len/2;
-}
-
-Graph graph_from_mtx(std::string file){
-	Graph G;
-	std::ifstream f(file, std::ios::in);
-	std::string s;
-	if (!f.is_open()){
-		throw std::runtime_error(std::string() + "Can't open file: " + file);
-	}
-	std::getline(f,s);
-	if (s.find(MTX_GRAPH_HDR) == std::string::npos){
-		throw std::runtime_error(std::string() + "Invalid mtx file: "+ file);
-	}
-	//skip comments
-	char c = f.peek();
-	while(c=='%'){
-		std::getline(f,s);
-		c = f.peek();
-	}
-	int rows, cols, lns;
-	f >> rows >> cols >> lns;
-	if (rows != cols){
-		throw std::runtime_error(std::string()+"Rows not equal to columns: " + file);
-	}
-	int u,v;
-	for (int i=0; i<lns; ++i){
-		f >> u >> v;
-		G.add_edge(u-1,v-1); // 1-indexed labels 
-	}
-	f.close();
-	return G;
-}
-
-DistMat mat_from_mtx(std::string file){
-	std::ifstream f(file, std::ios::in);
-	std::string s;
-	if (!f.is_open()){
-		throw std::runtime_error(std::string() + "Can't open file: " + file);
-	}
-	std::getline(f,s);
-	if (s.find(MTX_SYM_HDR)==std::string::npos){
-		throw std::runtime_error(std::string() + "Invalid mtx file: "+ file);
-	}
-	//skip comments
-	char c = f.peek();
-	while(c=='%'){
-		std::getline(f,s);
-		c = f.peek();
-	}
-	//rows, cols, entries
-	int rows, cols, lns;
-	f >> rows >> cols >> lns;
-	if (rows != cols){
-		throw std::runtime_error(std::string()+"Rows not equal to columns: " + file);
-	}
-
-	DistMat M(rows);
-	int u,v;
-	double val;
-	for(int i=0; i<lns; ++i){
-		f >> u >> v >> val;
-		M(u-1,v-1) = val;
-	}
-	f.close();
-	return M;
-}
-
-int Graph::to_mtx(std::string file){
-	std::ofstream f(file,std::ios::out);
-	if(!f.is_open()){
-		return 1;
-	}
-	f << MTX_GRAPH_HDR << std::endl;
-	int S = this->size();
-	f << S << " " << S << " " << this->num_edges() << std::endl;
-	for (int u=0; u<_adj.size(); ++u){
-		std::vector<int> nbr = neighbors(u);
-		for(vitr vt=nbr.begin(); vt!=nbr.end(); ++vt){
-			if(*vt > u){
-				f << u+1 << " " << (*vt)+1 << std::endl;
-			}
-		}
-	}
-	f.close();
-	return 0;
-}
-
-int DistMat::to_mtx(std::string file){ 
-	std::ofstream f(file, std::ios::out);
-	if (!f.is_open()){
-		return 1;
-	}
-	f << MTX_SYM_HDR << std::endl;
-	f << _N << " " << _N << " " << (_N*(_N-1))/2 << std::endl;
-	for (int i=0; i<_N; ++i){
-		for (int j=i+1; j<_N; ++j){
-			f << i+1 << " " << j+1 << " " << (*this)(i,j) << std::endl;
-		}
-	}
-	return 0;
 }
 
 DistMat::DistMat(int N, double val): _N(N), _zero(0){
@@ -343,15 +223,6 @@ int DistMat::size() const{
 	return _N;
 }
 
-void DistMat::print() const{
-	for (int i=0; i<_N; ++i){
-		for (int j=i+1; j<_N; ++j){
-			std::cout << (*this)(i,j) << " ";
-		}
-		std::cout << std::endl;
-	}
-}
-
 bool Graph::is_adj(int u, int v){
 	vmap::iterator fd = _adj.find(u);
 	if (fd == _adj.end() || fd->second.empty()){
@@ -359,59 +230,4 @@ bool Graph::is_adj(int u, int v){
 	}
 	vitr it = std::lower_bound(fd->second.begin(),fd->second.end(),v);
 	return (it != fd->second.end() && *it == v);
-}
-
-double Graph::mean_avg_precision(const DistMat& D) const{
-	int N = _adj.size();
-	if (N > D.size()){
-		throw std::invalid_argument("incompatible matrix size");
-	}
-	double sum=0, prc=0;
-	int b, intr;
-	for (vmap::const_iterator it=_adj.begin(); it!=_adj.end(); ++it){
-		for(const_vitr jt=it->second.begin();jt!=it->second.end();++jt){
-			int v=it->first;
-			prc=0;
-			b=0;
-			intr=0;
-			// for each u_i in neighbors(v), find the set of vertices B_i = { u: d(u,v) < d(v,u_i) }
-			// and the intersection of B_i and neighbors(v). 
-			// The `precision` is #(B_i intersect neighbors(v)) / #B_i
-			for(int u=0; u<N; ++u){
-				if (u!=v && D(u,v) <= D(v,*jt)){
-					b++;
-					const_vitr fd = std::lower_bound(it->second.begin(),it->second.end(),u);
-					if(fd!=it->second.end() && *fd == u){
-						intr++;
-					}
-				}
-			}
-			prc += (double)intr/ (double)b;
-		}
-		if (!it->second.empty()){
-			prc /= it->second.size();
-		}
-		sum += prc;
-	}
-	return sum/N;
-}
-
-double avg_distortion(const DistMat& D1, const DistMat& D2){
-	int S = D1.size();
-	if (S > D2.size()){
-		throw std::invalid_argument("incompatible matrix dimensions");
-	}
-	double sum=0;
-	double d;
-	for (int i=0; i<S; ++i){
-		for (int j=i+1; j<S; ++j){
-			d = std::abs(D1(i,j) - D2(i,j));
-			if( D1(i,j) > 0){
-				d /= D1(i,j);
-			}
-			sum += d;
-		}
-	}
-	sum /= (S*(S-1))/2;
-	return sum;
 }
