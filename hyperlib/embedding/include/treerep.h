@@ -20,17 +20,11 @@ typedef std::vector< std::vector<int> > vecvec;
  * @param D: DistMat holding the pairwise distances
  * @param tol: positive double specifying the tolerance
  * 
- * Returns: 
- * 		A pair (T,W) where T is the tree and W contains the (symmetric) edge weights
+ * Returns: weighted adjacency list, where u maps to pairs {v, w} 
+ * 			such that (u,v) is an edge with weight w.
+ * 			
  */
-std::pair<Graph,Graph::wmap> treerep(const DistMat& D, double tol=0.1); 
-
-/**
- * Generate a random tree
- * 		@param n: number of vertices in the tree
- * 		@param seed: rng seed
- */
-Graph rand_tree(unsigned n, int seed=1);
+Graph::wmap treerep(const DistMat& D, double tol=0.1); 
 
 // ========== Helper functions =============
 double grmv_prod(int x, int y, int z, const DistMat& W);

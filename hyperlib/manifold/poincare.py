@@ -206,8 +206,8 @@ class Poincare:
         """ Hyperbolic reflection that maps z to 0 and 0 to z. 
 
         Args:
-            z: point in the Poincare ball
-            x: Tensor of size B x dim representing B points in the Poincare ball
+            z: point in the Poincare ball that maps to the origin 
+            x: Tensor of size B x dim representing B points in the Poincare ball to reflect
         Returns:
             size B x dim Tensor of reflected points
         """

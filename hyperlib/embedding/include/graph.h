@@ -101,7 +101,6 @@ class Graph{
 		bool is_adj(int u, int v);
 		std::vector<int> neighbors(int u);
 		vmap adj_list();
-
 		DistMat metric(double tol=0.1) const;
 		int size() const;
 		int num_edges() const;
@@ -111,5 +110,4 @@ class Graph{
 		void _insert(int u, int v);
 		vmap _adj;
 };
-
 #endif

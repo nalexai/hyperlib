@@ -65,14 +65,15 @@ p.mobius_matvec(a, b, curvature)
 ## Embeddings 
 Hyperlib will provide various ways to embed data in hyperbolic space (coming soon)
 
+### Combinatorial Embedding
 If your data has a natural metric you can use the TreeRep algorithm [[5]](#references) to embed it in a weighted tree.
-Input the compressed distance matrix (e.g. use [scipy.pdist](https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.pdist.html#scipy.spatial.distance.pdist)).
+Input a symmetric distance matrix, or a compressed distance matrix (e.g. use [scipy.pdist](https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.pdist.html#scipy.spatial.distance.pdist)).
 ```python
 import numpy as np
-from hyperlib.embedding import treerep
+from hyperlib.embedding.metric import treerep
 
-# example from Sarich's data measuring immunological distances between 8 mammals (see [5])
-metric = np.array([ 
+# Example: immunological distances between 8 mammals by Sarich
+compressed_metric = np.array([ 
 		32.,  48.,  51.,  50.,  48.,  98., 148.,  
 		26.,  34.,  29.,  33., 84., 136.,  
 		42.,  44.,  44.,  92., 152.,  
@@ -81,12 +82,10 @@ metric = np.array([
 		90., 142., 
 		148.
 	])
-tree = treerep(metric, 8)
-# {(0, 10): 24.0, (1, 10): 8.0, (2, 11): 19.25, (3, 9): 18.25, (4, 12): 21.25, 
-#  (5, 8): 17.5, (6, 9): 67.75, (7, 13): 121.9375, (8, 9): 2.25, (8, 13): 1.0625, 
-#  (10, 11): 1.75, (11, 12): 2.0, (12, 13): 1.6875} 
-```
 
+# outputs an adjacency list
+tree = treerep(compressed_metric) 
+```
 
 ## TODO:
 - Implement an Attention Mechanism

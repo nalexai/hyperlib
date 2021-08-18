@@ -1,10 +1,9 @@
 import tensorflow as tf
-from manifold import poincare
+from hyperlib.manifold import poincare
 from utils import math
-from nn.layers import lin_hyp
-from nn.optimizers import rsgd
+from hyperlib.nn.layers import lin_hyp
+from hyperlib.nn.optimizers import rsgd
 import pytest
-
 
 class TestClass:
     @classmethod

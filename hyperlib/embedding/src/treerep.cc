@@ -7,7 +7,7 @@ std::default_random_engine& _trep_rng(int seed){
 	return rng;
 }
 
-std::pair<Graph,Graph::wmap> treerep(const DistMat& D, double tol){
+Graph::wmap treerep(const DistMat& D, double tol){
 	TREP_N = D.size();
 	TREP_TOL = tol;
 	DistMat W(D, 2*TREP_N);
@@ -41,11 +41,11 @@ std::pair<Graph,Graph::wmap> treerep(const DistMat& D, double tol){
 				W(i,j) = 0;
 			}
 			if(G.is_adj(i,j)){
-				weight[std::make_pair(i,j)]=W(i,j);
+				weight[std::make_pair(i,j)] = W(i,j);
 			}
 		}
 	}
-	return std::make_pair(G,weight);
+	return weight;
 }
 
 int _treerep_recurse(Graph& G, DistMat& W, std::vector<int>& V, std::vector<int>& stn,
@@ -258,15 +258,3 @@ void _zone2(Graph& G, DistMat& W, std::vector<int>& V, std::vector<int>& stn,
 inline double grmv_prod(int x, int y, int z, const DistMat& W){
 	return 0.5*(W(x,y)+W(x,z)-W(y,z));
 }
-
-Graph rand_tree(unsigned n, int seed){
-	std::uniform_int_distribution<> dist(0,n);
-	Graph G;
-	int v;
-	for (int u=1; u<n; ++u){
-		v = dist(_trep_rng()) %u;
-		G.add_edge(u,v);
-	}
-	return G;
-}
-

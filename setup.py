@@ -18,9 +18,12 @@ ext_modules = [
 setup(
     name="hyperlib",
     packages = find_packages(),
+    setup_requires = ["pip>=21"],
+    install_requires = ["numpy", "scipy", "networkx"],
     version=__version__,
     author="Nalex.ai",
     author_email="info@nalexai.com",
     description="A hyperbolic deep learning library",
     ext_modules=ext_modules,
+    license_files = "LICENSE"
 )
