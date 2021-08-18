@@ -70,7 +70,7 @@ If your data has a natural metric you can use the TreeRep algorithm [[5]](#refer
 Input a symmetric distance matrix, or a compressed distance matrix (e.g. use [scipy.pdist](https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.distance.pdist.html#scipy.spatial.distance.pdist)).
 ```python
 import numpy as np
-from hyperlib.embedding.metric import treerep
+from hyperlib.embedding.graph import treerep
 
 # Example: immunological distances between 8 mammals by Sarich
 compressed_metric = np.array([ 

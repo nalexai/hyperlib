@@ -1,6 +1,6 @@
 import tensorflow as tf
 from hyperlib.manifold import poincare
-from utils import math
+from hyperlib.utils import math
 from hyperlib.nn.layers import lin_hyp
 from hyperlib.nn.optimizers import rsgd
 import pytest
@@ -16,7 +16,6 @@ class TestClass:
         )
         self.test_tensor_shape_2_1a = tf.constant([[1.0], [2.0]], dtype=tf.float64)
         self.test_tensor_shape_2_1b = tf.constant([[0.5], [0.5]], dtype=tf.float64)
-        self.curvature_tensor = tf.constant([0.5], dtype=tf.float64)
         self.poincare_manifold = poincare.Poincare()
 
     def test_math_functions(self, x=tf.constant([1.0, 2.0, 3.0])):
@@ -25,19 +24,17 @@ class TestClass:
     def test_mobius_matvec_(self):
         result = self.poincare_manifold.mobius_matvec(
             self.test_tensor_shape_2_2_a,
-            self.test_tensor_shape_2_2_b,
-            self.curvature_tensor,
+            self.test_tensor_shape_2_2_b
         )
-        with pytest.raises(tf.python.framework.errors_impl.InvalidArgumentError):
+        with pytest.raises(tf.errors.InvalidArgumentError):
             self.poincare_manifold.mobius_matvec(
                 self.test_tensor_shape_2_2_a,
-                self.test_tensor_shape_2_1a,
-                self.curvature_tensor,
+                self.test_tensor_shape_2_1a
             )
 
     def test_expmap0(self):
         result = self.poincare_manifold.expmap0(
-            self.test_tensor_shape_2_2_a, self.curvature_tensor
+            self.test_tensor_shape_2_2_a 
         )
 
     @pytest.mark.skip(reason="working on a test for this")
@@ -47,7 +44,7 @@ class TestClass:
         )
 
     def test_proj(self):
-        result = self.poincare_manifold.proj(self.test_tensor_shape_2_2_a, 1)
+        result = self.poincare_manifold.proj(self.test_tensor_shape_2_2_a)
 
     def test_poincare_functions(self):
         manifold = poincare.Poincare()
@@ -56,23 +53,22 @@ class TestClass:
 
     def test_create_layer(self, units=32):
         hyp_layer = lin_hyp.LinearHyperbolic(
-            units, self.poincare_manifold, self.curvature_tensor
+            units, self.poincare_manifold, 1.0 
         )
         assert hyp_layer.units == units
-        assert hyp_layer.c == self.curvature_tensor
         assert hyp_layer.manifold == self.poincare_manifold
 
     def test_layer_training(self, units=32):
         x_input = tf.zeros([units, 1])
         hyp_layer = lin_hyp.LinearHyperbolic(
-            units, self.poincare_manifold, self.curvature_tensor
+            units, self.poincare_manifold, 1.0 
         )
         output = hyp_layer(x_input)
 
     def test_layer_training_with_bias(self, units=32):
         x_input = tf.zeros([units, 1])
         hyp_layer = lin_hyp.LinearHyperbolic(
-            units, self.poincare_manifold, self.curvature_tensor, use_bias=True
+            units, self.poincare_manifold, 1.0, use_bias=True
         )
         output = hyp_layer(x_input)
 
