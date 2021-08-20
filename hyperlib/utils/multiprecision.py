@@ -32,7 +32,7 @@ def poincare_metric(X, precision=50):
     N = X.shape[0]
     out = np.zeros(shape=(N*(N-1)//2), dtype=np.float64)
     for i in range(N):
-        idx = N*i+((i+2)*(i+2))//2
+        idx = N*i-((i+2)*(i+2))//2
         for j in range(i+1,N):
             out[idx+j] = poincare_dist(X[i],X[j], precision=precision)
     return out
