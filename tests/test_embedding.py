@@ -21,7 +21,7 @@ def sarich_data():
 
 def random_data(N,dim=2):
     # random points in the poincare ball 
-    rs = 1.-np.random.exponential(scale=1e-3, size=(N,))
+    rs = 1.-np.random.exponential(scale=1e-4, size=(N,))
     pts = np.random.normal(size = (N,dim))
     pts /= np.linalg.norm(pts, axis=1, keepdims=True)
     pts *= rs[:,None]

@@ -3,7 +3,6 @@ import numpy as np
 from scipy.spatial.distance import squareform
 import scipy.sparse as sp
 from .metric import is_metric
-from ..manifold.poincare import Poincare
 import _embedding
 
 def treerep(dists, **kwargs):

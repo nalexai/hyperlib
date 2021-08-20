@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from math import sqrt
-from ..utils.math import tanh, atanh_
+from ..utils.functional import tanh, atanh_
 
 class Poincare:
     """

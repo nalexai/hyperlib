@@ -42,9 +42,14 @@ PYBIND11_MODULE(_embedding,m){
 
 	m.def("graph_metric", &py_metric);
 	m.def("treerep_graph", &py_graph_treerep, 
-			py::arg("G"), py::arg("tol")=0.1);
+			py::arg("G"), 
+            py::arg("tol")=0.1,
+            py::return_value_policy::move);
 	m.def("treerep", &py_treerep,
-			py::arg("metric"), py::arg("N"), py::arg("tol")=0.1);
+			py::arg("metric"), 
+            py::arg("N"), 
+            py::arg("tol")=0.1,
+            py::return_value_policy::move);
 					
 	#ifdef VERSION_INFO
 		m.attr("__version__") = VERSION_INFO;

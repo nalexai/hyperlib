@@ -1,6 +1,6 @@
 import tensorflow as tf
 from hyperlib.manifold import poincare
-from hyperlib.utils import math
+from hyperlib.utils import functional as F
 from hyperlib.nn.layers import lin_hyp
 from hyperlib.nn.optimizers import rsgd
 import pytest
@@ -19,7 +19,7 @@ class TestClass:
         self.poincare_manifold = poincare.Poincare()
 
     def test_math_functions(self, x=tf.constant([1.0, 2.0, 3.0])):
-        return math.cosh(x)
+        return F.cosh(x)
 
     def test_mobius_matvec_(self):
         result = self.poincare_manifold.mobius_matvec(
