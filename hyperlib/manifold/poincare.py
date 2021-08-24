@@ -1,39 +1,20 @@
 import tensorflow as tf
-import numpy as np
-from math import sqrt
-from ..utils.functional import tanh, atanh_
+from ..utils.math import tanh, atanh, asinh
+from .base import Manifold
 
-class Poincare:
+class Poincare(Manifold):
+
     """
-    This class can be used for mathematical functions on the Poincare ball.
-    The Poincare n-ball with curvature -c< 0 is the set of points n-dim Euclidean space such that |x|^2 < 1/c
-    with a Riemannian metric given by 
-    math::
-        \lambda_c g_E = \frac{1}{1-c \|x\|^2} g_E
-    where g_E is the standard Euclidean metric.
+    Implementation of the poincare manifold,. This class can be used for mathematical functions on the poincare manifold.
     """
 
-    def __init__(self, c=1.0):
+    def __init__(self,):
         super(Poincare, self).__init__()
         self.name = "PoincareBall"
-        assert c>0
-        self._c = c
-        self._sqrt_c = sqrt(c)
         self.min_norm = 1e-15
-        self.eps = {tf.float32: 4e-3, tf.float64: 1e-5,
-                    np.dtype('float32'): 4e-3, np.dtype('float64'): 1e-5}
+        self.eps = {tf.float32: 4e-3, tf.float64: 1e-5}
 
-    @property
-    def curvature(self):
-        return self._c
-
-    @curvature.setter
-    def curvature(self, c):
-        assert c>0
-        self._c = c
-        self._sqrt_c = sqrt(c)
-
-    def mobius_matvec(self, m, x):
+    def mobius_matvec(self, m, x, c):
         """
         Generalization for matrix-vector multiplication to hyperbolic space defined as
         math::
@@ -43,15 +24,26 @@ class Poincare:
         Args:
             m : Tensor for multiplication
             x : Tensor point on poincare ball
+            c : Tensor of size 1 representing the hyperbolic curvature.
         Returns
             Mobius matvec result
         """
 
-        x_norm = self.clipped_norm(x)
+        sqrt_c = c ** 0.5
+        x_norm = tf.norm(x, axis=-1, keepdims=True, ord=2)
+        max_num = tf.math.reduce_max(x_norm)
+        x_norm = tf.clip_by_value(
+            x_norm, clip_value_min=self.min_norm, clip_value_max=max_num
+        )
         mx = x @ m
-        mx_norm = self.clipped_norm(x)
+        mx_norm = tf.norm(mx, axis=-1, keepdims=True, ord=2)
+        max_num = tf.math.reduce_max(mx_norm)
+        mx_norm = tf.clip_by_value(
+            mx_norm, clip_value_min=self.min_norm, clip_value_max=max_num
+        )
+
         res_c = (
-            tanh(mx_norm / x_norm * atanh_(self._sqrt_c * x_norm)) * mx / (mx_norm * self._sqrt_c)
+            tanh(mx_norm / x_norm * atanh(sqrt_c * x_norm)) * mx / (mx_norm * sqrt_c)
         )
         cond = tf.reduce_prod(
             tf.cast((mx == 0), tf.uint8, name=None), axis=-1, keepdims=True
@@ -60,57 +52,60 @@ class Poincare:
         res = tf.where(tf.cast(cond, tf.bool), res_0, res_c)
         return res
 
-    def clipped_norm(self, x):
-        x_norm = tf.norm(x, axis=-1, ord=2, keepdims=True)
-        max_num = tf.math.reduce_max(x_norm)
-        x_norm = tf.clip_by_value(
-                x_norm, clip_value_min=self.min_norm, clip_value_max=max_num
-                )
-        return x_norm
-
-    def expmap(self, u, p):
-        u_norm = self.clipped_norm(u) 
+    def expmap(self, u, p, c):
+        sqrt_c = c ** 0.5
+        u_norm = u.norm(dim=-1, p=2, keepdim=True).clamp_min(self.min_norm)
         second_term = (
-            tanh(self._sqrt_c / 2 * self.lambda_x(p) * u_norm) * u / (self._sqrt_c * u_norm)
+            tanh(sqrt_c / 2 * self._lambda_x(p, c) * u_norm) * u / (sqrt_c * u_norm)
         )
-        gamma_1 = self.mobius_add(p, second_term)
+        gamma_1 = self.mobius_add(p, second_term, c)
         return gamma_1
 
-    def lambda_x(self, x):
-        x_norm2 = tf.square(self.clipped_norm(x))
-        return 2.0 / (1.0 - self._c*x_norm2)
-
-    def expmap0(self, u):
+    def expmap0(self, u, c):
         """
         Hyperbolic exponential map at zero in the Poincare ball model.
           Args:
             u: tensor of size B x dimension representing tangent vectors.
+            c: tensor of size 1 representing the hyperbolic curvature.
           Returns:
             Tensor of shape B x dimension.
           """
+        sqrt_c = c ** 0.5
         max_num = tf.math.reduce_max(u)
-        u_norm = self.clipped_norm(u)
-        gamma_1 = tf.math.tanh(self._sqrt_c * u_norm) * u / (self._sqrt_c * u_norm)
+        u_norm = tf.clip_by_value(
+            tf.norm(u, axis=-1, ord=2, keepdims=True),
+            clip_value_min=self.min_norm,
+            clip_value_max=max_num,
+        )
+        gamma_1 = tf.math.tanh(sqrt_c * u_norm) * u / (sqrt_c * u_norm)
         return gamma_1
 
-    def logmap0(self, p):
+    def logmap0(self, p, c):
         """
         Hyperbolic logarithmic map at zero in the Poincare ball model.
         Args:
           p: tensor of size B x dimension representing hyperbolic points.
+          c: tensor of size 1 representing the hyperbolic curvature.
         Returns:
           Tensor of shape B x dimension.
         """
-        p_norm = self.clipped_norm(p)
-        scale = 1.0 / self._sqrt_c * artanh(self._sqrt_c * p_norm) / p_norm
+        sqrt_c = c ** 0.5
+        p_norm = tf.norm(p, axis=-1, ord=2, keepdims=True)
+        max_num = tf.math.reduce_max(p_norm)
+        p_norm = tf.clip_by_value(
+            p_norm, clip_value_min=self.min_norm, clip_value_max=max_num
+        )
+        scale = 1.0 / sqrt_c * atanh(sqrt_c * p_norm) / p_norm
         return scale * p
 
-    def proj(self, x):
+    def proj(self, x, c):
         """
         Safe projection on the manifold for numerical stability. This was mentioned in [1]
 
         Args:
             x : Tensor point on the Poincare ball
+            c : Tensor of size 1 representing the hyperbolic curvature.
+
         Returns:
             Projected vector on the manifold
 
@@ -118,13 +113,18 @@ class Poincare:
             [1] Hyperbolic Neural Networks, NIPS2018
             https://arxiv.org/abs/1805.09112
         """
-        norm = self.clipped_norm(x)
-        maxnorm = (1 - self.eps[x.dtype]) / self._sqrt_c  # tf.math.reduce_max(x)
+
+        x_for_norm = tf.norm(x, axis=-1, keepdims=True, ord=2)
+        max_num = tf.math.reduce_max(x_for_norm)
+        norm = tf.clip_by_value(
+            x_for_norm, clip_value_min=self.min_norm, clip_value_max=max_num
+        )
+        maxnorm = (1 - self.eps[x.dtype]) / (c ** 0.5)  # tf.math.reduce_max(x)
         cond = norm > maxnorm
         projected = x / norm * maxnorm
         return tf.where(cond, projected, x)
 
-    def mobius_add(self, x, y):
+    def mobius_add(self, x, y, c):
         """Element-wise Mobius addition.
       Args:
         x: Tensor of size B x dimension representing hyperbolic points.
@@ -134,83 +134,37 @@ class Poincare:
         Tensor of shape B x dimension representing the element-wise Mobius addition
         of x and y.
       """
-        cx2 = self._c * tf.reduce_sum(x * x, axis=-1, keepdims=True)
-        cy2 = self._c * tf.reduce_sum(y * y, axis=-1, keepdims=True)
-        cxy = self._c * tf.reduce_sum(x * y, axis=-1, keepdims=True)
+        cx2 = c * tf.reduce_sum(x * x, axis=-1, keepdims=True)
+        cy2 = c * tf.reduce_sum(y * y, axis=-1, keepdims=True)
+        cxy = c * tf.reduce_sum(x * y, axis=-1, keepdims=True)
         num = (1 + 2 * cxy + cy2) * x + (1 - cx2) * y
         denom = 1 + 2 * cxy + cx2 * cy2
-        return self.proj(num / tf.maximum(denom, self.min_norm))
-    
-    def gyr(x, y, z):
-        """
-        Ungar's gryation operation defined in [1].
+        return self.proj(num / tf.maximum(denom, self.min_norm), c)
 
-        math::
-            gyr[x,y]z = \ominus (x \oplus y)\oplus(x \oplus (y \oplus z))
-            
-            where \oplus is Mobius addition and \ominus is the left inverse.
 
-        Args:
-            x, y, z: Tensors of size B x dim in the Poincare ball of curvature c
-        Returns:
-            Tensor of size B x dim
-        Reference:
-           [1] A. Ungar, A Gryovector Space Approach to Hyperbolic Geometry
-        """
-        xy = tf.reduce_sum( x*y, axis=-1, keepdims=True)
-        yz = tf.reduce_sum( y*z, axis=-1, keepdims=True)
-        xz = tf.reduce_sum( x*z, axis=-1, keepdims=True)
-        x2 = tf.reduce_sum( x*x, axis=-1, keepdims=True)
-        y2 = tf.reduce_sum( y*y, axis=-1, keepdims=True)
-        z2 = tf.reduce_sum( z*z, axis=-1, keepdims=True)
-        A = self._c*yz - self._c**2 * xz * y2 + 2 * self._c**2 * xy * yz
-        B = self._c**2 * yz * x2 + self._c * xz
-        C = 1 + 2 * self._c* xy + self._c**2 * x2 * y2
-        return 2*(A * x - B * y)/tf.maximum(C, self.min_norm)+ z
+    def hyp_act(self, act, x, c_in, c_out):
+        """Apply an activation function to a tensor in the hyperbolic space"""
+        xt = act(self.logmap0(x, c=c_in))
+        return self.proj(self.expmap0(xt, c=c_out), c=c_out)
 
-    def parallel_transport(self, x, y, v):
-        """
-        The parallel transport of the tangent vector v from the tangent space at x
-        to the tangent space at y
-        """
-        return self.lambda_x(x)/ self.lambda_x(y) * self.gyr(y,-x,v)
+    def _hyperbolic_softmax(self, X, A, P, c):
+        """𝑝(𝑦 = 𝑘, 𝑥) ∝ 𝑒𝑥 𝑝(𝑠𝑖𝑔𝑛(< 𝑎𝑘 , −𝑞𝑎𝑘 ,𝑟𝑘 + 𝑥 >)||𝑎𝑘 ||𝑑(𝑥, Hˆ𝑎𝑘 ,𝑟𝑘))"""
+        # lambda_pkc = 2 / (1 - c * P.pow(2).sum(dim=1))
+        lambda_pkc =  2 / (1 - c * tf.reduce_sum(P * P, axis=1))
+        print(lambda_pkc)
+        # k = lambda_pkc * torch.norm(A, dim=1) / c ** 0.5
 
-    def dist(self, x, y):
-        """ Hyperbolic distance between points 
-        Args:
-            x, y: Tensors of size B x dim of points in the Poincare ball
-        """
-        norm = tf.norm(self.mobius_add(-x,y) + self.eps[x.dtype], 
-                        axis=1, 
-                        keepdims=True
-                        )
-        return 2./self._sqrt_c * atanh_( self._sqrt_c * norm)
+        k = lambda_pkc * tf.norm(A, axis=1, ord=2) / c ** 0.5
+        print(k)
+        mob_add = self.mobius_add(-P, X, c)
+        # num = 2 * c ** 0.5 * torch.sum(mob_add * A.unsqueeze(1), dim=-1)
+        num = 2 * c ** 0.5 * tf.reduce_sum(mob_add * tf.expand_dims(A, 1), axis=1)
+        print(num)
+        # denom = torch.norm(A, dim=1, keepdim=True) * (1 - c * mob_add.pow(2).sum(dim=2))
+        denom = tf.norm(A, axis=1, keepdims=True, ord=2) * (1 - c * tf.reduce_sum(mob_add * mob_add, axis=2))
+        print(denom)
+        logit = tf.expand_dims(k, 1) * asinh(num / denom)
+        print(logit)
+        return tf.transpose(logit, perm=[1,0])
 
-    def reflect(self, a, x):
-        """ Hyperbolic reflection with center at a, i.e. sphere inversion
-        about the sphere centered at a orthogonal to Poincare ball.
 
-        math::
-            \frac{r^2}{\|x-a\|^2} (x-a) + a,    where r^2 + \frac{1}{c} = \|a\|^2
-        Args:
-            a: Tensor representing center of reflection 
-            x: Tensor of size B x dim in the Poincare ball
-        Returns:
-            size B x dim Tensor of reflected points
-        """
-        a_norm = tf.norm(a, ord=2)
-        r2 = tf.square(a_norm) - 1/self._c
-        return r2/tf.square(self.clipped_norm(x-a)) * (x-a) + a
-
-    def reflect0(self, z, x):
-        """ Hyperbolic reflection that maps z to 0 and 0 to z. 
-
-        Args:
-            z: point in the Poincare ball that maps to the origin 
-            x: Tensor of size B x dim representing B points in the Poincare ball to reflect
-        Returns:
-            size B x dim Tensor of reflected points
-        """
-        z_norm2 = tf.square(self.clipped_norm(z))
-        a = self._c*z/z_norm2
-        return self.reflect(a,x)
