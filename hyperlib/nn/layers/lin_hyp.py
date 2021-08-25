@@ -38,16 +38,17 @@ class LinearHyperbolic(keras.layers.Layer):
         """
         # TODO: remove casting and instead recommend setting default tfd values to float64
         inputs = tf.cast(inputs, tf.float64)
-        mv = self.manifold.mobius_matvec(self.kernel, inputs)
-        res = self.manifold.proj(mv)
+        mv = self.manifold.mobius_matvec(self.kernel, inputs, self.c)
+        res = self.manifold.proj(mv, self.c)
 
         if self.use_bias:
-            hyp_bias = self.manifold.expmap0(self.bias)
-            hyp_bias = self.manifold.proj(hyp_bias)
-            res = self.manifold.mobius_add(res, hyp_bias)
-            res = self.manifold.proj(res)
+            hyp_bias = self.manifold.expmap0(self.bias, self.c)
+            hyp_bias = self.manifold.proj(hyp_bias, self.c)
+            res = self.manifold.mobius_add(res, hyp_bias, c=self.c)
+            res = self.manifold.proj(res, self.c)
 
-        return self.activation(res)
+        return self.manifold.hyp_act(self.activation, res, c_in=self.c, c_out=self.c)
+
 
     def get_config(self):
         base_config = super().get_config()
