@@ -1,13 +1,14 @@
 import tensorflow as tf
-import numpy as np
-from math import sqrt
-from ..utils.functional import tanh, atanh_
+from ..utils.functional import tanh, atanh, asinh
+from .base import Manifold
+
+class Poincare(Manifold):
 
 class Poincare:
     """
     This class can be used for mathematical functions on the Poincare ball.
     The Poincare n-ball with curvature -c< 0 is the set of points n-dim Euclidean space such that |x|^2 < 1/c
-    with a Riemannian metric given by 
+    with a Riemannian metric given by
     math::
         \lambda_c g_E = \frac{1}{1-c \|x\|^2} g_E
     where g_E is the standard Euclidean metric.
@@ -69,7 +70,7 @@ class Poincare:
         return x_norm
 
     def expmap(self, u, p):
-        u_norm = self.clipped_norm(u) 
+        u_norm = self.clipped_norm(u)
         second_term = (
             tanh(self._sqrt_c / 2 * self.lambda_x(p) * u_norm) * u / (self._sqrt_c * u_norm)
         )
@@ -139,15 +140,16 @@ class Poincare:
         cxy = self._c * tf.reduce_sum(x * y, axis=-1, keepdims=True)
         num = (1 + 2 * cxy + cy2) * x + (1 - cx2) * y
         denom = 1 + 2 * cxy + cx2 * cy2
+<<<<<<< HEAD
         return self.proj(num / tf.maximum(denom, self.min_norm))
-    
+
     def gyr(x, y, z):
         """
         Ungar's gryation operation defined in [1].
 
         math::
             gyr[x,y]z = \ominus (x \oplus y)\oplus(x \oplus (y \oplus z))
-            
+
             where \oplus is Mobius addition and \ominus is the left inverse.
 
         Args:
@@ -176,12 +178,12 @@ class Poincare:
         return self.lambda_x(x)/ self.lambda_x(y) * self.gyr(y,-x,v)
 
     def dist(self, x, y):
-        """ Hyperbolic distance between points 
+        """ Hyperbolic distance between points
         Args:
             x, y: Tensors of size B x dim of points in the Poincare ball
         """
-        norm = tf.norm(self.mobius_add(-x,y) + self.eps[x.dtype], 
-                        axis=1, 
+        norm = tf.norm(self.mobius_add(-x,y) + self.eps[x.dtype],
+                        axis=1,
                         keepdims=True
                         )
         return 2./self._sqrt_c * atanh_( self._sqrt_c * norm)
@@ -189,11 +191,21 @@ class Poincare:
     def reflect(self, a, x):
         """ Hyperbolic reflection with center at a, i.e. sphere inversion
         about the sphere centered at a orthogonal to Poincare ball.
+=======
+        return self.proj(num / tf.maximum(denom, self.min_norm), c)
+
+
+    def hyp_act(self, act, x, c_in, c_out):
+        """Apply an activation function to a tensor in the hyperbolic space"""
+        xt = act(self.logmap0(x, c=c_in))
+        return self.proj(self.expmap0(xt, c=c_out), c=c_out)
+
+>>>>>>> fc1c4a8d4f46d3dadaf44442de473847fc9c4ae5
 
         math::
             \frac{r^2}{\|x-a\|^2} (x-a) + a,    where r^2 + \frac{1}{c} = \|a\|^2
         Args:
-            a: Tensor representing center of reflection 
+            a: Tensor representing center of reflection
             x: Tensor of size B x dim in the Poincare ball
         Returns:
             size B x dim Tensor of reflected points
@@ -203,10 +215,10 @@ class Poincare:
         return r2/tf.square(self.clipped_norm(x-a)) * (x-a) + a
 
     def reflect0(self, z, x):
-        """ Hyperbolic reflection that maps z to 0 and 0 to z. 
+        """ Hyperbolic reflection that maps z to 0 and 0 to z.
 
         Args:
-            z: point in the Poincare ball that maps to the origin 
+            z: point in the Poincare ball that maps to the origin
             x: Tensor of size B x dim representing B points in the Poincare ball to reflect
         Returns:
             size B x dim Tensor of reflected points
