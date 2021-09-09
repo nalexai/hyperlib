@@ -7,7 +7,7 @@ import numpy as np
 
 def poincare_dist(x, y, c=1.0, precision=None):
     ''' 
-    The hyperbolic distance between points in the Poincare Ball (curvature=-1) 
+    The hyperbolic distance between points in the Poincare model with curvature -1/c 
         Args:
             x, y (ndarray): length D arrays representing points in the D-dimensional ball |x| < 1
             precision (int): bits of precision to use
@@ -33,7 +33,7 @@ def poincare_dist0(x, c=1.0, precision=None):
     return 2/sqrt_c * mpm.artanh( x_norm / sqrt_c)
 
 def poincare_metric(X, precision=None):
-    ''' Calculate the distance matrix of points in the Poincare Ball (curvature = -1) 
+    ''' Calculate the distance matrix of points in the Poincare model with curvature -1/c 
         Args:
             X (ndarray): N x D matrix representing N points in the D-dimensional ball |x|< 1
             precision (int): bits of precision to use
@@ -72,3 +72,14 @@ def poincare_reflect0(z, x, c=1.0, precision=None):
     xa2 = x2 + a2 - 2*zscal*mpm.fdot(z,x)
     scal = mpm.fdiv(r2, xa2)
     return scal*( x - zscal * z) + zscal * z
+
+def rotate(pts, x, y):
+    out = mpm.zeros(pts.rows, pts.cols)
+    v = x/mpm.norm(x) 
+    cos = mpm.fdot(x,y) / (mpm.norm(x), mpm.norm(y))
+    sin = mpm.sqrt(1.-cos**2)
+    u = y - mpm.fdot(v, y) * v 
+
+    mat = mpm.eye( x.cols ) - u.T * u - v.T * v \
+        + cos * u.T * u - sin * v.T * u + sin * u.T * v + cos * v.T * v
+    return mat

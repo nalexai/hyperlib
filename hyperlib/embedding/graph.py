@@ -1,9 +1,10 @@
-from math import sqrt, floor, log 
+from math import sqrt, floor, log, log2
+from itertools import product
 import networkx as nx
-from networkx.algorithms.shortest_paths.weighted import single_source_dijkstra_path_length
 import scipy.sparse as sp
 from scipy.spatial.distance import squareform
 import numpy as np
+from networkx.algorithms.shortest_paths.weighted import single_source_dijkstra_path_length
 from .metric import is_metric
 from ..utils.multiprecision import poincare_reflect0
 import mpmath as mpm
@@ -58,7 +59,8 @@ def to_sparse(edge_weights):
     return mat
 
 def sarkar_embedding(tree, root, **kwargs):
-    ''' Embed a tree in the Poincare disc using Sarkar's algorithm 
+    ''' 
+    Embed a tree in the Poincare disc using Sarkar's algorithm 
     from "Low Distortion Delaunay Embedding of Trees in Hyperbolic Plane.
         Args:
             tree (networkx.Graph) : The tree represented with int node labels.
@@ -78,20 +80,21 @@ def sarkar_embedding(tree, root, **kwargs):
     weighted = kwargs.get("weighted", True)
     tau = kwargs.get("tau",None)
     max_deg = max(tree.degree)[1]
+
     if tau is None:
-        # theoretical tau guarantees distortion < 1+eps
-        tau = 2*(1+eps)/eps * mpm.log(2*max_deg/ mpm.pi)
+        tau = (1+eps)/eps * mpm.log(2*max_deg/ mpm.pi)
     prc = kwargs.get("precision",None)
     if prc is None:
-        # estimate diameter
         dists = single_source_dijkstra_path_length(tree,root)
-        l = max(dists.values())
-        prc = int( (log(max_deg+1)) * l / eps )
+        l = 2*max(dists.values())
+        prc = floor( (log(max_deg+1)) * l/eps +1)
     mpm.mp.dps = prc
     
     n = tree.order()
     emb = mpm.zeros(n,2)
     place = []
+
+    # place the children of root
     for i, v in enumerate(tree[root]):
         if weighted: 
             r = mpm.tanh( tau*tree[root][v]["weight"])
@@ -125,4 +128,94 @@ def sarkar_embedding(tree, root, **kwargs):
             emb[w,:] = w_emb
             place.append((v,w))
     return emb
-        
+
+def sarkar_embedding_high_dim(tree, root, **kwargs):
+    eps = kwargs.get("eps",0.1)
+    weighted = kwargs.get("weighted", true)
+    dim = kwargs.get("dim")
+    tau = kwargs.get("tau", None)
+    max_deg = max(tree.degree)[1]
+    
+    n = tree.order()
+    emb = mpm.zeros(n,dim)
+    place = []
+
+    # place the children of root
+    for i, v in enumerate(tree[root]):
+        if weighted: 
+            r = mpm.tanh( tau*tree[root][v]["weight"])
+        else:
+            r = mpm.tanh(tau)
+        theta = 2*i*mpm.pi / tree.degree[root]
+        emb[v,0] = r*mpm.cos(theta)
+        emb[v,1] = r*mpm.sin(theta)
+        place.append((root,v))
+    
+    # TODO parallelize this
+    while place:
+        u, v = place.pop() # u is the parent of v
+        p, x = emb[u,:], emb[v,:]
+        rp = poincare_reflect0(x, p, precision=prc)
+        arg = mpm.acos(rp[0]/mpm.norm(rp))
+        if rp[1] < 0:
+            arg = 2*mpm.pi - arg
+            
+        theta = 2*mpm.pi / tree.degree[v]
+        i=0
+        for w in tree[v]:
+            if w == u: continue
+            i+=1
+            if weighted:
+                r = mpm.tanh(tau*tree[v][w]["weight"])
+            else:
+                r = mpm.tanh(tau)
+            w_emb = r * mpm.matrix([mpm.cos(arg+theta*i),mpm.sin(arg+theta*i)]).T
+            w_emb = poincare_reflect0(x, w_emb, precision=prc)
+            emb[w,:] = w_emb
+            place.append((v,w))
+
+def hadamard_code(n):
+    ''' 
+    Generate a binary Hadamard code 
+        Args:
+            n (int): if n = 2**k + r < 2**(k+1), generates a [n, k, 2**(k-1)] Hadamard code
+        Returns:
+            2**k x n np.array where code(i) = the ith row
+    '''
+    k = floor( log2(n) )
+    r = n - 2**k 
+    gen = np.zeros((k,2**k), dtype=np.int32)
+    for i, w in enumerate( product([0,1], repeat=k) ):
+        gen[:,i] = w
+    code = gen.T @ gen % 2
+    if r > 0: 
+        code = np.concatenate( (code, code[:,:3]), axis=1 )
+    return code
+
+def fib_2d_code(n, eps=None):
+    if eps is None: 
+        if n >= 600000:
+          eps = 214
+        elif n>= 400000:
+          eps = 75
+        elif n>= 11000:
+          eps = 27
+        elif n>= 890:
+          eps = 10
+        elif n>= 177:
+          eps = 3.33 
+        elif n>= 24:
+          eps = 1.33 
+        else:
+          eps = 0.33 
+
+    golden = (1+sqrt(5))/2
+    i = np.arange(0,n)
+    theta = 2*np.pi*i / golden
+    phi = np.arccos(
+            1 - 2*(i+eps)/(n-1+2*eps)
+            )
+    return np.stack(
+            [np.cos(theta)*np.sin(phi), np.sin(theta)*np.sin(phi), np.cos(phi)],
+            axis=1
+        )
