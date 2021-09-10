@@ -143,3 +143,19 @@ class Poincare(Manifold):
         """Apply an activation function to a tensor in the hyperbolic space"""
         xt = act(self.logmap0(x, c=c_in))
         return self.proj(self.expmap0(xt, c=c_out), c=c_out)
+
+    def single_query_attn_scores(self, key, query, c):
+        """
+        Arguments:
+            key: Hyperbolic key with shape (batch, seq, hidden_dim)
+            query: Hyperbolic query with shape (batch, hidden_dim)
+        Returns:
+            Scores as scalars in R with shape (batch,seq,1)
+        """
+        euclid_key = self.logmap0(key, c)
+        euclid_query = self.logmap0(query, c)
+        scores = tf.matmul(euclid_query.unsqueeze(-1), euclid_key, transpose_b=True)
+        denom = tf.norm(euclid_key, keepdims=True, axis=-1)
+        scores = (1. / denom) * scores
+        return scores
+
