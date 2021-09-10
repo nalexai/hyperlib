@@ -1,6 +1,5 @@
 import tensorflow as tf
 from tensorflow import keras
-# from tf.keras import backend as K
 
 class HypLuongAttention(keras.layers.Attention):
   """Dot-product attention layer, a.k.a. Luong-style attention.
