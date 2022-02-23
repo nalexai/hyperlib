@@ -22,7 +22,7 @@ def poincare_dist(x, y, c=1.0, precision=None):
     sqrt_c = mpm.sqrt(c)
     denom = 1 - 2*c*xy + c**2 * x2*y2
     norm = mpm.norm( ( -(1-2*c*xy + c*y2)*x + (1.-c*x2)*y ) /denom )
-    return 1/sqrt_c * mpm.atanh( sqrt_c * denom) 
+    return 1/sqrt_c * mpm.atanh( sqrt_c * norm ) 
 
 def poincare_dist0(x, c=1.0, precision=None):
     ''' Distance from 0 to x in the Poincare model with curvature -1/c'''
@@ -30,7 +30,7 @@ def poincare_dist0(x, c=1.0, precision=None):
         mpm.mp.dps = precision
     x_norm = mpm.norm(x)
     sqrt_c = mpm.sqrt(c)
-    return 2/sqrt_c * mpm.artanh( x_norm / sqrt_c)
+    return 2/sqrt_c * mpm.atanh( x_norm / sqrt_c)
 
 def poincare_metric(X, precision=None):
     ''' Calculate the distance matrix of points in the Poincare model with curvature -1/c 

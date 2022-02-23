@@ -16,8 +16,43 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.3.1
         env:
-          CIBW_SOME_OPTION: "cp27-* cp35-* pp27-* pp36-* pp37-*"
+          CIBW_SKIP: "cp27-* cp35-* pp27-* pp36-* pp37-* pp38-*"
 
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: wheelhouse/*.tar.gz
+  
+  upload_wheels:
+    name: Upload wheels to PyPI
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+
+    steps:
+      - name: Collect sdits and wheels
+        uses: actions/download-artifact@v2
+        with:
+          name: wheels 
+          path: wheelhouse 
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@v1.4.2
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          packages_dir: wheelhouse/
+          repository_url: https://test.pypi.org/legacy/
+          skip_existing: true

@@ -22,7 +22,7 @@ setup(
     version=__version__,
     packages = find_packages(),
     setup_requires = ["pip>=21"],
-    install_requires = ["numpy>=1.19.3", "tensorflow>=2.0.0", "scipy>=1.7.0", "mpmath"],
+    install_requires = ["numpy>=1.19.3", "tensorflow>=2.0.0", "scipy>=1.7.0", "mpmath", "networkx"],
     ext_modules=ext_modules,
     author="Nalex.ai",
     author_email="info@nalexai.com",
@@ -36,7 +36,7 @@ setup(
     url = "https://github.com/nalexai/hyperlib",
     classifiers = [ 
         "Programming Language :: Python :: 3",
-        "Liscense :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent"
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
     ], 
 )

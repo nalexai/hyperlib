@@ -35,8 +35,7 @@ def test_treerep_sarich(sarich_data):
         assert nx.algorithms.tree.recognition.is_tree(G)
         adj_mat = to_sparse(T)
         tree_metric = shortest_path(adj_mat, directed=False)
-        distortion = avg_distortion(squareform(tree_metric[:8,:8]),
-                                    sarich_data)
+        distortion = avg_distortion(squareform(tree_metric[:8,:8]), sarich_data)
         stats.append(distortion)
     best = min(stats)
     print(f"Sarich Data\n\tTreerep Avg Distortion ------------ {best:.5f}")
