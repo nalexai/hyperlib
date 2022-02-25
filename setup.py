@@ -28,6 +28,7 @@ setup(
     author_email="info@nalexai.com",
     description="Library that contains implementations of machine learning components in the hyperbolic space",
     long_description=readme,
+    long_description_content_type="text/markdown",
     project_urls = {
         "Source" : "https://github.com/nalexai/hyperlib",
         "Issues" : "https://github.com/nalexai/hyperlib/issues"
