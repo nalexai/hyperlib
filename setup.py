@@ -22,7 +22,14 @@ setup(
     version=__version__,
     packages = find_packages(),
     setup_requires = ["pip>=21"],
-    install_requires = ["numpy>=1.19.3", "tensorflow>=2.0.0", "scipy>=1.7.0", "mpmath", "networkx"],
+    install_requires = [
+        "numpy>=1.19.3", 
+        "tensorflow>=2.0.0", 
+        "scipy>=1.7.0", 
+        "mpmath", 
+        "networkx", 
+        "pybind11>=2.7.0"
+    ],
     ext_modules=ext_modules,
     author="Nalex.ai",
     author_email="info@nalexai.com",

@@ -35,7 +35,7 @@ def treerep(dists, **kwargs):
         W = _embedding.treerep(dists, N, tol)
     elif len(dists.shape) == 2:
         assert is_metric(dists)
-        W = _embedding.treerep(squareform(dist), dists.shape[0], tol)
+        W = _embedding.treerep(squareform(dists), dists.shape[0], tol)
     else:
         raise ValueError("Invalid distance matrix")
     return W
@@ -131,10 +131,18 @@ def sarkar_embedding(tree, root, **kwargs):
 
 def sarkar_embedding_high_dim(tree, root, **kwargs):
     eps = kwargs.get("eps",0.1)
-    weighted = kwargs.get("weighted", true)
+    weighted = kwargs.get("weighted", True)
     dim = kwargs.get("dim")
     tau = kwargs.get("tau", None)
     max_deg = max(tree.degree)[1]
+
+    prc = kwargs.get("precision",None)
+    if prc is None:
+        dists = single_source_dijkstra_path_length(tree,root)
+        l = 2*max(dists.values())
+        prc = floor( (log(max_deg+1)) * l/eps +1)
+    mpm.mp.dps = prc
+    
     
     n = tree.order()
     emb = mpm.zeros(n,dim)

@@ -56,5 +56,5 @@ class HypLuongAttention(keras.layers.Attention):
 
   def get_config(self):
     config = {'use_scale': self.use_scale}
-    base_config = super(Attention, self).get_config()
+    base_config = super(keras.layers.Attention, self).get_config()
     return dict(list(base_config.items()) + list(config.items()))
