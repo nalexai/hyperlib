@@ -1,6 +1,9 @@
 name: Build
 
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build_wheels:
@@ -42,11 +45,11 @@ jobs:
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
 
     steps:
-      - name: Collect sdits and wheels
+      - name: Collect sdist and wheels
         uses: actions/download-artifact@v2
         with:
           path: wheelhouse 
-      
+     
       - name: Show artifacts
         run: ls -R
         working-directory: wheelhouse
