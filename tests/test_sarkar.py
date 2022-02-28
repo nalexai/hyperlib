@@ -15,8 +15,8 @@ def test_sarkar_2D_unweighted():
     assert all([ mpm.norm(M[i,:]) < 1 for i in range(n)])
 
 def test_sarkar_3D_unweighted():
-    T = trinary_tree(4)
-    M = sarkar_embedding_3D(T, 0, weighted=False, tau=0.75, precision=40)
+    T = trinary_tree(3)
+    M = sarkar_embedding_3D(T, 0, weighted=False, tau=0.7, precision=50)
     n = nx.number_of_nodes(T)
     assert M.rows == n 
     assert M.cols == 3
