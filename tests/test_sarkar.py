@@ -8,7 +8,7 @@ from hyperlib.embedding.sarkar import *
 
 def test_sarkar_2D_unweighted():
     T = binary_tree(4)
-    M = sarkar_embedding(T, 0, weighted=False)
+    M = sarkar_embedding(T, 0, weighted=False, precision=30)
     n = nx.number_of_nodes(T)
     assert M.rows == n 
     assert M.cols == 2 
@@ -16,7 +16,7 @@ def test_sarkar_2D_unweighted():
 
 def test_sarkar_3D_unweighted():
     T = trinary_tree(4)
-    M = sarkar_embedding_3D(T, 0, weighted=False, tau=0.75)
+    M = sarkar_embedding_3D(T, 0, weighted=False, tau=0.75, precision=40)
     n = nx.number_of_nodes(T)
     assert M.rows == n 
     assert M.cols == 3
