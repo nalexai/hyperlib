@@ -22,7 +22,7 @@ def poincare_dist(x, y, c=1.0, precision=None):
     sqrt_c = mpm.sqrt(c)
     denom = 1 - 2*c*xy + c**2 * x2*y2
     norm = mpm.norm( ( -(1-2*c*xy + c*y2)*x + (1.-c*x2)*y ) /denom )
-    return 1/sqrt_c * mpm.atanh( sqrt_c * norm ) 
+    return 2/sqrt_c * mpm.atanh( sqrt_c * norm ) 
 
 def poincare_dist0(x, c=1.0, precision=None):
     ''' Distance from 0 to x in the Poincare model with curvature -1/c'''
@@ -51,6 +51,10 @@ def poincare_metric(X, precision=None):
     return out
 
 def poincare_reflect(a, x, c=1.0, precision=None):
+    '''
+    Spherical inversion (or "Poincare reflection") of a point x about a sphere
+    with center at point "a", and radius = 1/c.
+    '''
     if precision is not None:
         mpm.mp.dps = precision
     a2 = mpm.fdot(a,a)
@@ -61,8 +65,13 @@ def poincare_reflect(a, x, c=1.0, precision=None):
     return scal*(x-a) + a
 
 def poincare_reflect0(z, x, c=1.0, precision=None):
+    '''
+    Spherical inversion (or "Poincare reflection") of a point x
+    such that point z is mapped to the origin.
+    '''
     if precision is not None:
         mpm.mp.dps = precision
+    # the reflection is poincare_reflect(a, x) where
     # a = c * z / |z|**2
     z2 = mpm.fdot(z,z)
     zscal = c / z2
@@ -72,14 +81,3 @@ def poincare_reflect0(z, x, c=1.0, precision=None):
     xa2 = x2 + a2 - 2*zscal*mpm.fdot(z,x)
     scal = mpm.fdiv(r2, xa2)
     return scal*( x - zscal * z) + zscal * z
-
-def rotate(pts, x, y):
-    out = mpm.zeros(pts.rows, pts.cols)
-    v = x/mpm.norm(x) 
-    cos = mpm.fdot(x,y) / (mpm.norm(x), mpm.norm(y))
-    sin = mpm.sqrt(1.-cos**2)
-    u = y - mpm.fdot(v, y) * v 
-
-    mat = mpm.eye( x.cols ) - u.T * u - v.T * v \
-        + cos * u.T * u - sin * v.T * u + sin * u.T * v + cos * v.T * v
-    return mat

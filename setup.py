@@ -10,12 +10,11 @@ with open("README.md") as f:
     readme = f.read()
 
 ext_modules = [ 
-    Pybind11Extension("_embedding", sorted(glob("hyperlib/embedding/src/*.cc")),
+    Pybind11Extension("__hyperlib_embedding", sorted(glob("hyperlib/embedding/src/*.cc")),
         include_dirs = ["hyperlib/embedding/include", pybind11.get_include()],
         cxx_std=11, 
     )
 ]
-
 
 setup(
     name="hyperlib",
@@ -28,8 +27,9 @@ setup(
         "scipy>=1.7.0", 
         "mpmath", 
         "networkx", 
-        "pybind11>=2.7.0"
-    ],
+        "pybind11>=2.7.0"] + (
+        ["gmpy2"] if sys.platform != "win32" else []
+    ),
     ext_modules=ext_modules,
     author="Nalex.ai",
     author_email="info@nalexai.com",

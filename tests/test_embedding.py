@@ -1,11 +1,15 @@
 import pytest
 from random import randint
-from hyperlib.embedding.graph import *
-from hyperlib.embedding.metric import avg_distortion, delta_rel
-from hyperlib.utils.multiprecision import poincare_metric
 from scipy.sparse.csgraph import shortest_path
+from scipy.spatial.distance import squareform
 import networkx as nx
 import numpy as np
+
+from hyperlib.embedding.treerep import treerep
+from hyperlib.embedding.metric import avg_distortion, delta_rel
+from hyperlib.utils.multiprecision import poincare_metric
+from hyperlib.utils.graph import * 
+
 
 @pytest.fixture
 def sarich_data():
@@ -29,7 +33,7 @@ def random_data(N,dim=2):
 
 def test_treerep_sarich(sarich_data):
     stats = [] 
-    for _ in range(20):
+    for _ in range(10):
         T = treerep(sarich_data)
         G = to_networkx(T)
         assert nx.algorithms.tree.recognition.is_tree(G)
