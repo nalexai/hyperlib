@@ -3,6 +3,7 @@ from scipy.spatial.distance import squareform
 import numpy as np
 import mpmath as mpm
 
+from ..utils.graph import to_networkx
 from .metric import is_metric
 import __hyperlib_embedding
 
@@ -14,6 +15,7 @@ def treerep(dists, **kwargs):
     		metric (ndarray): size NxN distance matrix or 
                             compressed matrix of length N*(N-1)//2 ( e.g from scipy.pdist )
     		tol (double): tolerance for checking equalities (default=0.1)
+            return_networkx (bool): return a networkx.Graph instead of edges (default=False)
     	Returns:
             A dict mapping edges (u,v), u<v to their edge weight
         
@@ -34,4 +36,7 @@ def treerep(dists, **kwargs):
         W = __hyperlib_embedding.treerep(squareform(dists), dists.shape[0], tol)
     else:
         raise ValueError("Invalid distance matrix")
+
+    if kwargs.get("return_networkx", False):
+        return to_networkx(W)
     return W

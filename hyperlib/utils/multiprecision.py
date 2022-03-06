@@ -9,7 +9,7 @@ def poincare_dist(x, y, c=1.0, precision=None):
     ''' 
     The hyperbolic distance between points in the Poincare model with curvature -1/c 
         Args:
-            x, y (ndarray): length D arrays representing points in the D-dimensional ball |x| < 1
+            x, y: size 1xD mpmath matrix representing point in the D-dimensional ball |x| < 1
             precision (int): bits of precision to use
         Returns:
             mpmath float object. Can be converted back to regular float
