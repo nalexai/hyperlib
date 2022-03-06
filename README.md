@@ -101,7 +101,7 @@ root = 0
 embedding = sarkar_embedding(tree, root, tau=0.5)
 ```
 
-Please see the [examples directory](https://github.com/nalexai/hyperlib/examples) for complete examples.
+Please see the [examples directory](https://github.com/meiji163/hyperlib/tree/main/examples) for complete examples.
 
 ## TODO:
 - Implement an Attention Mechanism
