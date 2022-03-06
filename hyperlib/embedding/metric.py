@@ -29,7 +29,7 @@ def delta_rel(dists, base=None):
         base (int): index of basepoint in 0...N-1 (default = random)
     '''
     if base is None:
-        base = randint(0,dist.shape[0]-1)
+        base = randint(0,dists.shape[0]-1)
     assert is_metric(dists) and 0 <= base < dists.shape[0]
     G = mat_gromov_prod(dists, base)
     delta = np.max(max_min(G,G)-G)

@@ -1,9 +1,11 @@
-from math import sqrt, floor 
-import numpy as np
+from math import sqrt, floor
 from scipy.spatial.distance import squareform
-import scipy.sparse as sp
+import numpy as np
+import mpmath as mpm
+
+from ..utils.graph import to_networkx
 from .metric import is_metric
-import _embedding
+import __hyperlib_embedding
 
 def treerep(dists, **kwargs):
     """
@@ -13,6 +15,7 @@ def treerep(dists, **kwargs):
     		metric (ndarray): size NxN distance matrix or 
                             compressed matrix of length N*(N-1)//2 ( e.g from scipy.pdist )
     		tol (double): tolerance for checking equalities (default=0.1)
+            return_networkx (bool): return a networkx.Graph instead of edges (default=False)
     	Returns:
             A dict mapping edges (u,v), u<v to their edge weight
         
@@ -27,29 +30,13 @@ def treerep(dists, **kwargs):
     if len(dists.shape) == 1:
         N = floor( (1+sqrt(1+8*len(dists)))/2 )
         assert N*(N-1)//2 == len(dists)
-        W = _embedding.treerep(dists, N, tol)
+        W = __hyperlib_embedding.treerep(dists, N, tol)
     elif len(dists.shape) == 2:
         assert is_metric(dists)
-        W = _embedding.treerep(squareform(dist), dists.shape[0], tol)
+        W = __hyperlib_embedding.treerep(squareform(dists), dists.shape[0], tol)
     else:
         raise ValueError("Invalid distance matrix")
+
+    if kwargs.get("return_networkx", False):
+        return to_networkx(W)
     return W
-
-def to_networkx(edge_weights):
-    ''' Convert edge weight dict to networkx weighted graph'''
-    import networkx 
-    G = networkx.Graph()
-    for e in edge_weights:
-        G.add_edge(e[0], e[1], weight=edge_weights[e])
-    return G
-
-def to_sparse(edge_weights):
-    ''' Convert edge weight dict to compressed adjacency matrix,
-    stored in a scipy.sparse.dok_matrix
-    '''
-    N = max([e[1] for e in edge_weights])+1
-    mat = sp.dok_matrix((N,N), dtype=np.float64)
-    for e in edge_weights:
-        mat[e[0],e[1]] = edge_weights[e]
-        mat[e[1],e[0]] = edge_weights[e]
-    return mat

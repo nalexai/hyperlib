@@ -31,7 +31,7 @@ Graph::wmap py_treerep(py::array_t<double, py::array::c_style | py::array::force
 	return treerep(M,tol);
 }
 
-PYBIND11_MODULE(_embedding,m){
+PYBIND11_MODULE(__hyperlib_embedding,m){
 	py::class_<Graph>(m, "Graph")
 		.def(py::init<>())
 		.def("add_edge", &Graph::add_edge)
@@ -41,15 +41,17 @@ PYBIND11_MODULE(_embedding,m){
 		.def("remove_vertex", &Graph::remove_vertex);
 
 	m.def("graph_metric", &py_metric);
-	m.def("treerep_graph", &py_graph_treerep, 
+	m.def("treerep_graph", 
+      &py_graph_treerep, 
 			py::arg("G"), 
-            py::arg("tol")=0.1,
-            py::return_value_policy::move);
-	m.def("treerep", &py_treerep,
+      py::arg("tol")=0.1,
+      py::return_value_policy::move);
+	m.def("treerep", 
+      &py_treerep,
 			py::arg("metric"), 
-            py::arg("N"), 
-            py::arg("tol")=0.1,
-            py::return_value_policy::move);
+      py::arg("N"), 
+      py::arg("tol")=0.1,
+      py::return_value_policy::move);
 					
 	#ifdef VERSION_INFO
 		m.attr("__version__") = VERSION_INFO;
