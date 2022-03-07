@@ -47,19 +47,16 @@ jobs:
     steps:
       - name: Collect sdist and wheels
         uses: actions/download-artifact@v2
-        with:
-          path: wheelhouse 
      
       - name: Show artifacts
         run: ls -R
-        working-directory: wheelhouse
 
       - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@v1.4.2
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          packages_dir: wheelhouse/
+          packages_dir: artifact/
           repository_url: https://test.pypi.org/legacy/
           skip_existing: true
 
@@ -68,5 +65,5 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-          packages_dir: wheelhouse/
+          packages_dir: artifact/
           skip_existing: true
