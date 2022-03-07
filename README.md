@@ -101,7 +101,7 @@ root = 0
 embedding = sarkar_embedding(tree, root, tau=0.5)
 ```
 
-Please see the [examples directory](https://github.com/meiji163/hyperlib/tree/main/examples) for complete examples.
+Please see the [examples directory](https://github.com/nalexiai/hyperlib/tree/main/examples) for complete examples.
 
 ## References
 [^1]: [Chami, I., Ying, R., Ré, C. and Leskovec, J. Hyperbolic Graph Convolutional Neural Networks. NIPS 2019.](http://web.stanford.edu/~chami/files/hgcn.pdf)
