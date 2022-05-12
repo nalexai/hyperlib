@@ -57,8 +57,6 @@ class Lorentz(Manifold):
         d = x.shape[-1]
         ud = u[:,1:d]
         ux = tf.math.reduce_sum( x[:,1:d]*ud, axis=1, keepdims=True)
-        mask = tf.ones_like(u)
-        b, d = mask.shape
         x0 = tf.clip_by_value(x[:,0:1], clip_value_min=self.eps[x.dtype], clip_value_max=1e5)
         return tf.concat( [ux/x0, ud], axis=1 )
 
