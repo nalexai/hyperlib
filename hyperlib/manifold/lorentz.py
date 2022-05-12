@@ -34,10 +34,10 @@ class Lorentz(Manifold):
     def sqdist(self, x, y, c):
         K = 1. / c
         prod = self.minkowski_dot(x, y)
-        theta = self.clip_min(-prod / K, 1.0 + self.eps[x.dtype])
-        sqdist = K * arcosh_(theta) ** 2
-        # clamp distance to avoid nans in Fermi-Dirac decoder
-        return self.clip_max(sqdist,50.0)
+        theta = tf.clip_by_value(-prod / K, 
+            clip_value_min=1.0 + self.eps[x.dtype], clip_value_max=self.max_norm)
+        sqdist = K * tf.math.arcosh(theta) ** 2
+        return sqdist
 
     def proj(self, x, c):
         """Projects point (d+1)-dimensional point x to the manifold"""
@@ -52,26 +52,15 @@ class Lorentz(Manifold):
         return tf.concat([t, y], axis=1)
 
     def proj_tan(self, u, x, c):
-        K = 1. / c
-        d = x.shape(1) - 1
-        ux = tf.math.reduce_sum(x.narrow(-1, 1, d) * u.narrow(-1, 1, d), axis=1, keepdims=True)
+        """Projects vector u onto the tangent space at x.
+        Note: this is not the orthogonal projection"""
+        d = x.shape[-1]
+        ud = u[:,1:d]
+        ux = tf.math.reduce_sum( x[:,1:d]*ud, axis=1, keepdims=True)
         mask = tf.ones_like(u)
         b, d = mask.shape
-        zeros_mask = tf.zeros((b, 1))
-        ones_mask = tf.zeros((b, d-1))
-        #mask[:, 0] = 0
-        mask = tf.concat([zeros_mask, ones_mask], axis=1)
-
-        vals = tf.zeros_like(u)
-        b, d = vals.shape
-        res1 = tf.zeros((b,1), dtype=vals.dtype)
-        res1 += ux / tf.clip_min(x[:, 0:1], min=self.eps[x.dtype])
-        res2 = tf.zeros((b,d-1), dtype=vals.dtype)
-        res2 += sqrtK * sinh(theta) * (x / x_norm)
-        vals = tf.concat([res1,res2], axis=1)
-
-        #vals[:, 0:1] = ux / tf.clip_min(x[:, 0:1], min=self.eps[x.dtype])
-        return vals + mask * u
+        x0 = tf.clip_by_value(x[:,0:1], clip_value_min=self.eps[x.dtype], clip_value_max=1e5)
+        return tf.concat( [ux/x0, ud], axis=1 )
 
     def proj_tan0(self, u, c):
         narrowed = u[:,:1]
@@ -83,19 +72,21 @@ class Lorentz(Manifold):
         K = 1. / c
         sqrtK = K ** 0.5
         normu = self.minkowski_norm(u)
-        normu = tf.clip_max(normu, max=self.max_norm)
+        normu = self.clip_norm(normu)
         theta = normu / sqrtK
-        theta = tf.clip_minp(theta, min=self.min_norm)
+        theta = self.clip_norm(theta)
         result = cosh(theta) * x + sinh(theta) * u / theta
         return self.proj(result, c)
 
     def logmap(self, x, y, c):
         K = 1. / c
-        xy = self.clip_max(self.minkowski_dot(x, y), -self.eps[x.dtype]) - K
+        xy = tf.clip_by_value(self.minkowski_dot(x, y), 
+            clip_value_min=-self.max_norm, clip_value_max=-self.eps[x.dtype]) 
+        xy -= K
         u = y + xy * x * c
         normu = self.minkowski_norm(u)
-        normu = self.clip_min(normu, self.min_norm)
-        dist = self.sqdist(x, y, c) ** 0.5
+        normu = self.clip_norm(normu)
+        dist = tf.math.sqrt(self.sqdist(x, y, c))
         result = dist * u / normu
         return self.proj_tan(result, x, c)
 
@@ -108,10 +99,9 @@ class Lorentz(Manifold):
         K = 1. / c
         sqrtK = K ** 0.5
         d = u.shape[-1]
-        #print(tf.shape(u))
         x = tf.reshape(u[:,1:d], [-1, d-1])
         norm = tf.norm(x, ord=2, axis=1, keepdims=True)
-        x_norm = self.clip_min(x_norm, self.min_norm)
+        x_norm = self.clip_norm(x_norm)
         theta = x_norm / sqrtK
         res = tf.ones_like(u)
         b, d = res.shape
@@ -128,8 +118,9 @@ class Lorentz(Manifold):
         b, d = x.shape
         y = tf.reshape(x[:,1:], [-1, d-1])
         y_norm = tf.norm(y, ord=2, axis=1, keepdims=True)
-        y_norm = self.clip_min(y_norm, self.min_norm)
-        theta = self.clip_min(x[:, 0:1] / sqrtK, min=1.0 + self.eps[x.dtype])
+        y_norm = self.clip_norm(y_norm)
+        theta = tf.clip_by_value(x[:, 0:1] / sqrtK, 
+            clip_value_min=1.0+self.eps[x.dtype], clip_value_max=self.max_norm)
         res = sqrtK * tf.math.acosh(theta) * y / y_norm
         zeros = tf.zeros((b,1), dtype=res.dtype)
         return tf.concat([zeros, res], axis=1)
@@ -149,11 +140,14 @@ class Lorentz(Manifold):
     def ptransp(self, x, y, u, c):
         logxy = self.logmap(x, y, c)
         logyx = self.logmap(y, x, c)
-        sqdist = self.clip_min(y_norm, self.min_norm)
-        sqdist = self.clip_min(self.sqdist(x, y, c), min=self.min_norm)
+        sqdist = self.clip_norm(y_norm)
+        sqdist = self.clip_norm(self.sqdist(x, y, c))
         alpha = self.minkowski_dot(logxy, u) / sqdist
         res = u - alpha * (logxy + logyx)
         return self.proj_tan(res, y, c)
+
+    def clip_norm(self, x):
+        return tf.clip_by_value(x, clip_value_min=self.min_norm, clip_value_max=self.max_norm)
 
     def ptransp0(self, x, u, c):
         K = 1. / c
@@ -163,7 +157,7 @@ class Lorentz(Manifold):
         y = x[:,1:d]
 
         y_norm = tf.norm(y, ord=2, axis=1, keepdims=True)
-        y_norm = self.clip_min(y_norm, self.min_norm)
+        y_norm = self.clip_norm(y_norm)
         y_normalized = y / y_norm
         v = tf.ones_like(x)
         v[:, 0:1] = - y_norm
