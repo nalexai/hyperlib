@@ -98,7 +98,7 @@ class Lorentz(Manifold):
         sqrtK = K ** 0.5
         d = u.shape[-1]
         x = tf.reshape(u[:,1:d], [-1, d-1])
-        norm = tf.norm(x, ord=2, axis=1, keepdims=True)
+        x_norm = tf.norm(x, ord=2, axis=1, keepdims=True)
         x_norm = self.clip_norm(x_norm)
         theta = x_norm / sqrtK
         res = tf.ones_like(u)
@@ -138,7 +138,6 @@ class Lorentz(Manifold):
     def ptransp(self, x, y, u, c):
         logxy = self.logmap(x, y, c)
         logyx = self.logmap(y, x, c)
-        sqdist = self.clip_norm(y_norm)
         sqdist = self.clip_norm(self.sqdist(x, y, c))
         alpha = self.minkowski_dot(logxy, u) / sqdist
         res = u - alpha * (logxy + logyx)
