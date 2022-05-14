@@ -9,6 +9,8 @@ class Lorentz(Manifold):
     Implementation of the Lorentz/Hyperboloid manifold defined by
     :math: `L = \{ x \in R^d | -x_0^2 + x_1^2 + ... + x_d^2 = -K \}`, 
     where c = 1 / K is the hyperbolic curvature and d is the manifold dimension.
+
+    The point :math: `( \sqrt{K}, 0, \dots, 0 )` is referred to as "zero".
     """
 
     def __init__(self):
@@ -30,7 +32,8 @@ class Lorentz(Manifold):
             dot, clip_value_min=self.eps[u.dtype], clip_value_max=self.max_norm)
         return tf.math.sqrt(t)
 
-    def sqdist(self, x, y, c):
+    def dist_squared(self, x, y, c):
+        """Squared hyperbolic distance between x, y"""
         K = 1. / c
         theta = tf.clip_by_value( -self.minkowski_dot(x, y) / K, 
             clip_value_min=1.0 + self.eps[x.dtype], clip_value_max=self.max_norm)
@@ -41,11 +44,11 @@ class Lorentz(Manifold):
         K = 1. / c
         d1 = x.shape[-1]
         y = x[:,1:d1]
-        y_sqnorm = tf.norm(y, ord=2, axis=1, keepdims=True) ** 2
-        max_num = tf.math.reduce_max(K + y_sqnorm)
+        y_sqnorm = tf.math.square( 
+            tf.norm(y, ord=2, axis=1, keepdims=True))
         t = tf.clip_by_value(K + y_sqnorm, 
             clip_value_min=self.eps[x.dtype],
-            clip_value_max=max_num
+            clip_value_max=self.max_norm
         )
         return tf.concat([tf.math.sqrt(t), y], axis=1)
 
@@ -59,10 +62,12 @@ class Lorentz(Manifold):
         return tf.concat( [ux/x0, ud], axis=1 )
 
     def proj_tan0(self, u, c):
-        narrowed = u[:,:1]
-        vals = tf.zeros_like(u)
-        vals[:, 0:1] = narrowed
-        return u - vals
+        """Projects vector u onto the tangent space at zero.
+        See also: Lorentz.proj_tan"""
+        b, d1 = u.shape
+        z = tf.zeros((b,1), dtype=u.dtype)
+        ud = u[:,1:d1]
+        return tf.concat([z, ud], axis=1)
 
     def expmap(self, u, x, c):
         """Maps vector u in the tangent space at x onto the manifold""" 
@@ -70,11 +75,9 @@ class Lorentz(Manifold):
         sqrtK = K ** 0.5
         normu = self.minkowski_norm(u)
         normu = self.clip_norm(normu)
-        print(normu)
         theta = normu / sqrtK
         theta = self.clip_norm(theta)
         result = cosh(theta) * x + sinh(theta) * u / theta
-        print(result)
         return self.proj(result, c)
 
     def logmap(self, y, x, c):
@@ -86,7 +89,7 @@ class Lorentz(Manifold):
         u = y + xy * x * c
         normu = self.minkowski_norm(u)
         normu = self.clip_norm(normu)
-        dist = tf.math.sqrt(self.sqdist(x, y, c))
+        dist = tf.math.sqrt(self.dist_squared(x, y, c))
         result = dist * u / normu
         return self.proj_tan(result, x, c)
 
@@ -96,6 +99,7 @@ class Lorentz(Manifold):
         return self.proj(self.expmap0(xt, c=c_out), c=c_out)
 
     def expmap0(self, u, c):
+        """Maps vector u in the tangent space at zero onto the manifold""" 
         K = 1. / c
         sqrtK = K ** 0.5
         d = u.shape[-1]
@@ -113,6 +117,8 @@ class Lorentz(Manifold):
         return self.proj(res, c)
 
     def logmap0(self, x, c):
+        """Maps point y in the manifold to the tangent space at zero.
+        See also: Lorentz.logmap"""
         K = 1. / c
         sqrtK = K ** 0.5
         b, d = x.shape
@@ -136,34 +142,38 @@ class Lorentz(Manifold):
         return self.expmap0(mu, c)
 
     def ptransp(self, x, y, u, c):
-        logxy = self.logmap(x, y, c)
-        logyx = self.logmap(y, x, c)
-        sqdist = self.clip_norm(self.sqdist(x, y, c))
-        alpha = self.minkowski_dot(logyx, u) / sqdist
-        res = u - alpha * (logxy + logyx)
+        """Parallel transport a vector u in the tangent space at x
+        to the tangent space at y"""
+        log_xy = self.logmap(y, x, c)
+        log_yx= self.logmap(x, y, c)
+        dist_squared = self.clip_norm(self.dist_squared(x, y, c))
+        alpha = self.minkowski_dot(log_xy, u) / dist_squared
+        res = u - alpha * (log_xy + log_yx)
         return self.proj_tan(res, y, c)
 
     def ptransp0(self, x, u, c):
+        """Parallel transport a vector u in the tangent space at zero
+        to the tangent space at x.
+        See also: Lorentz.ptransp"""
         K = 1. / c
         sqrtK = K ** 0.5
         x0 = x[:,:1]
-        d = x.shape[-1] - 1
-        y = x[:,1:d]
+        d1 = x.shape[-1]
+        y = x[:,1:d1]
 
         y_norm = tf.norm(y, ord=2, axis=1, keepdims=True)
         y_norm = self.clip_norm(y_norm)
-        y_normalized = y / y_norm
-        v = tf.ones_like(x)
-        v[:, 0:1] = - y_norm
-        v[:, 1:] = (sqrtK - x0) * y_normalized
-        alpha = tf.math.reduce_sum(y_normalized * u[:, 1:], axis=1, keepdims=True) / sqrtK
+        y_unit = y / y_norm
+        v = tf.concat([y_norm, (sqrtK - x0)*y_unit], axis=1)
+
+        alpha = tf.math.reduce_sum(y_unit * u[:, 1:], axis=1, keepdims=True) / sqrtK
         res = u - alpha * v
         return self.proj_tan(res, x, c)
 
     def to_poincare(self, x, c):
         K = 1. / c
         sqrtK = K ** 0.5
-        d = x.shape[-1] - 1
+        d1 = x.shape[-1]
         return sqrtK * x[:,1:d] / (x[:, 0:1] + sqrtK)
 
     def clip_norm(self, x):
