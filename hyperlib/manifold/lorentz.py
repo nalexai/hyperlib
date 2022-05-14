@@ -174,7 +174,7 @@ class Lorentz(Manifold):
         K = 1. / c
         sqrtK = K ** 0.5
         d1 = x.shape[-1]
-        return sqrtK * x[:,1:d] / (x[:, 0:1] + sqrtK)
+        return sqrtK * x[:,1:d1] / (x[:, 0:1] + sqrtK)
 
     def clip_norm(self, x):
         return tf.clip_by_value(x, clip_value_min=self.min_norm, clip_value_max=self.max_norm)
