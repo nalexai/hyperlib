@@ -2,8 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from .base import Manifold
-from ..utils.math import cosh, sinh
-
+from ..utils.functional import cosh, sinh, arcosh
 
 class Lorentz(Manifold):
     """
@@ -33,30 +32,29 @@ class Lorentz(Manifold):
 
     def sqdist(self, x, y, c):
         K = 1. / c
-        prod = self.minkowski_dot(x, y)
-        theta = tf.clip_by_value(-prod / K, 
+        theta = tf.clip_by_value( -self.minkowski_dot(x, y) / K, 
             clip_value_min=1.0 + self.eps[x.dtype], clip_value_max=self.max_norm)
-        sqdist = K * tf.math.arcosh(theta) ** 2
-        return sqdist
+        return K * arcosh(theta)**2
 
     def proj(self, x, c):
         """Projects point (d+1)-dimensional point x to the manifold"""
         K = 1. / c
-        d = x.shape[-1]
-        y = x[:,1:d]
+        d1 = x.shape[-1]
+        y = x[:,1:d1]
         y_sqnorm = tf.norm(y, ord=2, axis=1, keepdims=True) ** 2
         max_num = tf.math.reduce_max(K + y_sqnorm)
-        t = tf.clip_by_value(
-            K + y_sqnorm, clip_value_min=self.eps[x.dtype], clip_value_max=max_num
+        t = tf.clip_by_value(K + y_sqnorm, 
+            clip_value_min=self.eps[x.dtype],
+            clip_value_max=max_num
         )
-        return tf.concat([t, y], axis=1)
+        return tf.concat([tf.math.sqrt(t), y], axis=1)
 
     def proj_tan(self, u, x, c):
         """Projects vector u onto the tangent space at x.
         Note: this is not the orthogonal projection"""
-        d = x.shape[-1]
-        ud = u[:,1:d]
-        ux = tf.math.reduce_sum( x[:,1:d]*ud, axis=1, keepdims=True)
+        d1 = x.shape[-1]
+        ud = u[:,1:d1]
+        ux = tf.math.reduce_sum( x[:,1:d1]*ud, axis=1, keepdims=True)
         x0 = tf.clip_by_value(x[:,0:1], clip_value_min=self.eps[x.dtype], clip_value_max=1e5)
         return tf.concat( [ux/x0, ud], axis=1 )
 
@@ -67,18 +65,22 @@ class Lorentz(Manifold):
         return u - vals
 
     def expmap(self, u, x, c):
+        """Maps vector u in the tangent space at x onto the manifold""" 
         K = 1. / c
         sqrtK = K ** 0.5
         normu = self.minkowski_norm(u)
         normu = self.clip_norm(normu)
+        print(normu)
         theta = normu / sqrtK
         theta = self.clip_norm(theta)
         result = cosh(theta) * x + sinh(theta) * u / theta
+        print(result)
         return self.proj(result, c)
 
-    def logmap(self, x, y, c):
+    def logmap(self, y, x, c):
+        """Maps point y in the manifold to the tangent space at x"""
         K = 1. / c
-        xy = tf.clip_by_value(self.minkowski_dot(x, y), 
+        xy = tf.clip_by_value(self.minkowski_dot(x, y) + K, 
             clip_value_min=-self.max_norm, clip_value_max=-self.eps[x.dtype]) 
         xy -= K
         u = y + xy * x * c
@@ -119,7 +121,7 @@ class Lorentz(Manifold):
         y_norm = self.clip_norm(y_norm)
         theta = tf.clip_by_value(x[:, 0:1] / sqrtK, 
             clip_value_min=1.0+self.eps[x.dtype], clip_value_max=self.max_norm)
-        res = sqrtK * tf.math.acosh(theta) * y / y_norm
+        res = sqrtK * arcosh(theta) * y / y_norm
         zeros = tf.zeros((b,1), dtype=res.dtype)
         return tf.concat([zeros, res], axis=1)
 
@@ -129,22 +131,17 @@ class Lorentz(Manifold):
         return self.expmap(v, x, c)
 
     def mobius_matvec(self, m, x, c):
-        #print('m',m.shape)
-        #print('x',x.shape)
         u = self.logmap0(x, c)
-        mu = u @ m #hgcn: #mu = u @ tf.transpose(m)
+        mu = u @ m 
         return self.expmap0(mu, c)
 
     def ptransp(self, x, y, u, c):
         logxy = self.logmap(x, y, c)
         logyx = self.logmap(y, x, c)
         sqdist = self.clip_norm(self.sqdist(x, y, c))
-        alpha = self.minkowski_dot(logxy, u) / sqdist
+        alpha = self.minkowski_dot(logyx, u) / sqdist
         res = u - alpha * (logxy + logyx)
         return self.proj_tan(res, y, c)
-
-    def clip_norm(self, x):
-        return tf.clip_by_value(x, clip_value_min=self.min_norm, clip_value_max=self.max_norm)
 
     def ptransp0(self, x, u, c):
         K = 1. / c
@@ -168,3 +165,6 @@ class Lorentz(Manifold):
         sqrtK = K ** 0.5
         d = x.shape[-1] - 1
         return sqrtK * x[:,1:d] / (x[:, 0:1] + sqrtK)
+
+    def clip_norm(self, x):
+        return tf.clip_by_value(x, clip_value_min=self.min_norm, clip_value_max=self.max_norm)
