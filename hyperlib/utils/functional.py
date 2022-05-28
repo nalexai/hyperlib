@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 """
-Tensorflow Math functions with clipping as required for hyperoblic operations.
+Tensorflow Math functions with clipping as required for hyperbolic functions.
 """
 
 def cosh(x, clamp=15):
