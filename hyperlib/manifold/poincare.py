@@ -61,6 +61,21 @@ class Poincare(Manifold):
         gamma_1 = self.mobius_add(p, second_term, c)
         return gamma_1
 
+    def dist(self, x, y, c):
+        """
+        Poincare distance between two points
+        math::
+            2/\sqrt{c} \artanh(\sqrt{c} ||-x \oplus_c y||)
+        """
+        sqrt_c = c ** 0.5
+        x2 = tf.reduce_sum(x * x, axis=-1, keepdims=True)
+        y2 = tf.reduce_sum(y * y, axis=-1, keepdims=True)
+        xy = tf.reduce_sum(x * y, axis=-1, keepdims=True)
+        denom = 1 - 2*c * xy + c**2 * x2 * y2
+        num = -(1 - 2*c*xy + c*y2) * x + (1 - c*x2) * y
+        theta = tf.norm( num/denom, axis=-1, ord=2, keepdims=True)
+        return 2/sqrt_c * atanh( sqrt_c * theta )
+
     def expmap0(self, u, c):
         """
         Hyperbolic exponential map at zero in the Poincare ball model.
