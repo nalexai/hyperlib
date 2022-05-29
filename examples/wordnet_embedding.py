@@ -6,10 +6,11 @@ from tensorflow import keras
 
 from hyperlib.manifold.lorentz import Lorentz
 from hyperlib.manifold.poincare import Poincare
+from hyperlib.loss.contrastive_loss import contrastive_loss
 
 
 def load_wordnet_data(file, negative_samples=10):
-    '''Load wordnet nouns transitive closure dataset 
+    '''Load wordnet nouns transitive closure dataset
     and compute negative samples'''
     noun_closure = pd.read_csv(file)
     noun_closure_np = noun_closure[["id1","id2"]].values
@@ -38,39 +39,9 @@ def load_wordnet_data(file, negative_samples=10):
     noun_closure["neg_pairs"] = noun_closure["id1"].apply(lambda x: neg_samples[x])
     return noun_closure, unique_nouns
 
-def contrastive_loss(pos_embs, neg_embs, M, c=1.0, clip_value=0.9):
-    '''
-    The contrastive loss for embeddings used by Nickel & Kiela
-    math::
-        -\log( e^{-d(x,y)} / \sum_{n \in N(x)} e^{-d(x,n)})
-
-    where (x,y) is a positive example,
-    N(x) is the set of negative samples for x,
-    and d(.,.) is the hyperbolic distance
-    '''
-    # clip embedding norms before expmap
-    pos_embs = tf.clip_by_norm(pos_embs, clip_value, axes=2)
-    neg_embs = tf.clip_by_norm(neg_embs, clip_value, axes=2)
-    
-    x_pos = M.expmap0(pos_embs, c)
-    x_neg = M.expmap0(neg_embs, c)
-    
-    batch_loss = M.dist(x_pos[:,0,:], x_pos[:,1,:], c)
-    
-    x = x_pos[:,0,:]
-    x = tf.expand_dims(x, 1)
-    x = tf.broadcast_to(x, x_neg.shape)
-
-    neg_loss = tf.reduce_sum(tf.exp(-M.dist(x, x_neg, c)), axis=1)
-    # clip to avoid log(0)
-    neg_loss = tf.clip_by_value(neg_loss, clip_value_min=1e-15, clip_value_max=1e10)
-    batch_loss += tf.math.log(neg_loss)
-    return tf.reduce_sum(batch_loss, axis=0)
-
-
 def train(model, train_data, **kwargs):
     epochs = kwargs.get("epochs", 10)
-    c = kwargs.get("c", 1.0) 
+    c = kwargs.get("c", 1.0)
     lr = kwargs.get("lr", 1e-2)
     clip_value = kwargs.get("clip_value", 0.9)
     momentum = kwargs.get("momentum", 0)
@@ -121,9 +92,9 @@ emb_layer = keras.layers.Embedding(
 model = keras.Sequential([string_lookup_layer, emb_layer])
 
 train(
-    model, 
-    train_dataset, 
-    c=1.0, 
+    model,
+    train_dataset,
+    c=1.0,
     epochs=10,
     clip_value=0.9,
     lr=1e-2,
