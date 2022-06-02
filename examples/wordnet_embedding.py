@@ -9,13 +9,10 @@ from hyperlib.manifold.poincare import Poincare
 from hyperlib.models.pehr import HierarchicalEmbeddings
 
 
-def load_wordnet_data(file, negative_samples=10):
-    '''Load wordnet nouns transitive closure dataset
-    and compute negative samples'''
+def load_wordnet_data(file, negatives=20):
     noun_closure = pd.read_csv(file)
     noun_closure_np = noun_closure[["id1","id2"]].values
 
-    # edges represent positive samples
     edges = set()
     for i, j in noun_closure_np:
         edges.add((i,j))
@@ -24,20 +21,18 @@ def load_wordnet_data(file, negative_samples=10):
         noun_closure["id1"].tolist()+noun_closure["id2"].tolist()
     ))
 
-    # for each noun find negative samples
-    neg_samples = {}
-    for noun in unique_nouns:
-        neg_list = []
-        while len(neg_list) < negative_samples:
-            neg_noun = choice(unique_nouns)
-            if neg_noun != noun \
-            and neg_noun not in neg_list \
-            and (noun, neg_noun) not in edges:
-                neg_list.append(neg_noun)
-        neg_samples[noun] = neg_list
-
-    noun_closure["neg_pairs"] = noun_closure["id1"].apply(lambda x: neg_samples[x])
+    noun_closure["neg_pairs"] = noun_closure["id1"].apply(get_neg_pairs, args=(edges, 20,))
     return noun_closure, unique_nouns
+
+def get_neg_pairs(noun, edges, negatives=20):
+    neg_list = []
+    while len(neg_list) < negatives:
+        neg_noun = choice(unique_nouns)
+        if neg_noun != noun \
+        and neg_noun not in neg_list \
+        and (noun, neg_noun) not in edges:
+            neg_list.append(neg_noun)
+    return neg_list
 
 
 # Make training dataset
