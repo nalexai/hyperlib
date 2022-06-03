@@ -21,10 +21,10 @@ def load_wordnet_data(file, negatives=20):
         noun_closure["id1"].tolist()+noun_closure["id2"].tolist()
     ))
 
-    noun_closure["neg_pairs"] = noun_closure["id1"].apply(get_neg_pairs, args=(edges, 20,))
+    noun_closure["neg_pairs"] = noun_closure["id1"].apply(get_neg_pairs, args=(edges, unique_nouns, 20,))
     return noun_closure, unique_nouns
 
-def get_neg_pairs(noun, edges, negatives=20):
+def get_neg_pairs(noun, edges, unique_nouns, negatives=20):
     neg_list = []
     while len(neg_list) < negatives:
         neg_noun = choice(unique_nouns)
