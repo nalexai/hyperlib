@@ -29,25 +29,32 @@ def get_neg_pairs(noun, edges, unique_nouns, negatives=20):
     while len(neg_list) < negatives:
         neg_noun = choice(unique_nouns)
         if neg_noun != noun \
-        and neg_noun not in neg_list \
-        and (noun, neg_noun) not in edges:
+        and not neg_noun in neg_list \
+        and not ((noun, neg_noun) in edges or (neg_noun, noun) in edges):
             neg_list.append(neg_noun)
     return neg_list
 
 
 # Make training dataset
-noun_closure, unique_nouns = load_wordnet_data("data/mammal_closure.csv")
+noun_closure, unique_nouns = load_wordnet_data("data/mammal_closure.csv", negatives=15)
 noun_closure_dataset = noun_closure[["id1","id2"]].values
 
-batch_size = 32
+batch_size = 16
 train_dataset = tf.data.Dataset.from_tensor_slices(
         (noun_closure_dataset, noun_closure["neg_pairs"].tolist()))
 train_dataset = train_dataset.shuffle(buffer_size=1024).batch(batch_size)
 
 # Create model
-model = HierarchicalEmbeddings(vocab=unique_nouns, embedding_dim=5)
+model = HierarchicalEmbeddings(vocab=unique_nouns, embedding_dim=10)
 sgd = keras.optimizers.SGD(learning_rate=1e-2, momentum=0.9)
 
 # Run custom training loop
-model.fit(train_dataset, sgd, epochs=5)
-print(model.get_embeddings())
+model.fit(train_dataset, sgd, epochs=20)
+embs = model.get_embeddings()
+
+M = Poincare()
+mammal = M.expmap0(model(tf.constant('dog.n.01')), c=1)
+dists = M.dist(mammal, embs, c=1.0)
+top = tf.math.top_k(-dists[:,0], k=20)
+for i in top.indices:
+    print(unique_nouns[i],': ',-dists[i,0].numpy())

@@ -42,8 +42,11 @@ class HierarchicalEmbeddings(tf.keras.Model):
     def get_embeddings(self):
         embeddings = self.embedding (tf.constant([i for i in range(len(self.vocab))]))
         embeddings_copy = tf.identity(embeddings)
-        embeddings_hyperbolic = self.manifold.expmap0(embeddings_copy, c=1.0)
-        return embeddings_hyperbolic.numpy()
+        embeddings_hyperbolic = self.manifold.expmap0(embeddings_copy, c=self.c)
+        return embeddings_hyperbolic
+
+    def get_vocabulary(self):
+        return self.vocab
 
     @staticmethod
     def get_model(vocab, embedding_dim=2):
