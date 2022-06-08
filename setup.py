@@ -5,14 +5,14 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 from glob import glob
 import sys
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 with open("README.md") as f:
     readme = f.read()
 
-ext_modules = [ 
+ext_modules = [
     Pybind11Extension("__hyperlib_embedding", sorted(glob("hyperlib/embedding/src/*.cc")),
         include_dirs = ["hyperlib/embedding/include", pybind11.get_include()],
-        cxx_std=11, 
+        cxx_std=11,
     )
 ]
 
@@ -22,11 +22,11 @@ setup(
     packages = find_packages(),
     setup_requires = ["pip>=21"],
     install_requires = [
-        "numpy>=1.19.3", 
-        "tensorflow>=2.0.0", 
-        "scipy>=1.7.0", 
-        "mpmath", 
-        "networkx", 
+        "numpy>=1.19.3",
+        "tensorflow>=2.0.0",
+        "scipy>=1.7.0",
+        "mpmath",
+        "networkx",
         "pybind11>=2.7.0",
         "gmpy2",
     ],
@@ -42,9 +42,9 @@ setup(
     },
     license_files = "LICENSE",
     url = "https://github.com/nalexai/hyperlib",
-    classifiers = [ 
+    classifiers = [
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-    ], 
+    ],
 )
