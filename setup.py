@@ -5,7 +5,7 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 from glob import glob
 import sys
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 with open("README.md") as f:
     readme = f.read()
 
