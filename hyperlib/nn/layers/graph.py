@@ -6,42 +6,37 @@ from .linear import LinearHyperbolic, ActivationHyperbolic
 
 class HyperbolicAggregation(keras.Layer):
 
-    def call():
-        if self.use_att:
-            if self.local_agg:
-                x_local_tangent = []
-                for i in range(x.size(0)):
-                    x_local_tangent.append(self.manifold.logmap(x[i], x, c=self.c))
-                x_local_tangent = torch.stack(x_local_tangent, dim=0)
-                adj_att = self.att(x_tangent, adj)
-                att_rep = adj_att.unsqueeze(-1) * x_local_tangent
-                support_t = torch.sum(adj_att.unsqueeze(-1) * x_local_tangent, dim=1)
-                output = self.manifold.proj(self.manifold.expmap(x, support_t, c=self.c), c=self.c)
-                return output
-            else:
-                adj_att = self.att(x_tangent, adj)
-                support_t = torch.matmul(adj_att, x_tangent)
-        else:
-            support_t = torch.spmm(adj, x_tangent)
+    def _init_(self, manifold, c):
+        self.manifold = manifold
+        self.c = c
+
+    def call(self, inputs):
+        x_tangent, adj = inputs
+        support_t = tf.sparse.sparse_dense_matmul(adj, x_tangent)
         output = self.manifold.proj(self.manifold.expmap0(support_t, c=self.c), c=self.c)
         return output
 
 class HGCLayer(keras.Layer):
-    def __init__(self):
+    def __init__(self, linear_layer, aggregation_layer, activation_layer):
         super().__init__()
 
         self.manifold = Lorentz()
         self.c = tf.Variable([0.4], trainable=True)
+        self.linear_layer = linear_layer
+        self.aggregation_layer = aggregation_layer
+        self.activation_layer = activation_layeractivation_layer
 
     def call(self, inputs):
         # Step 1 (hyperbolic feature transform)
-        inputs = self.manifold.logmap0(inputs, c=self.c)
+        x, adj = inputs
+        x = self.manifold.logmap0(x, c=self.c)
 
         # Step 2 (attention-based neighborhood aggregation)
-        x = LinearHyperbolic(inputs)
+        x = linear(inputs)
+        x = aggregation_layer((x, adj))
 
         # Step 3 (non-linear activation with different curvatures)
-        x = ActivationHyperbolic(x)
+        x = activation_layer(x)
 
         # Notes
         # Note 1:  Hyperbolic embeddings at the last layer can then be used to predict node attributes or links
@@ -54,6 +49,8 @@ class HGCLayer(keras.Layer):
         #         This method performs similarly to Euclidean classification. Finally, we also add a link prediction
         #         regularization objective in node classification tasks, to encourage embeddings at the last layer to
         #         preserve the graph structure
+
+        return x
 
 
 class HGCN(keras.Model):
