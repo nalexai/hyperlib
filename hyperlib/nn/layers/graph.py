@@ -4,9 +4,10 @@ from tensorflow import keras
 from .linear import LinearHyperbolic, ActivationHyperbolic
 
 
-class HyperbolicAggregation(keras.Layer):
+class HyperbolicAggregation(keras.layers.Layer):
 
-    def _init_(self, manifold, c):
+    def __init__(self, manifold, c):
+        super().__init__()
         self.manifold = manifold
         self.c = c
 
@@ -16,15 +17,15 @@ class HyperbolicAggregation(keras.Layer):
         output = self.manifold.proj(self.manifold.expmap0(support_t, c=self.c), c=self.c)
         return output
 
-class HGCLayer(keras.Layer):
-    def __init__(self, linear_layer, aggregation_layer, activation_layer):
+class HGCLayer(keras.layers.Layer):
+    def __init__(self, manifold, input_size, c, activation):
         super().__init__()
 
-        self.manifold = Lorentz()
-        self.c = tf.Variable([0.4], trainable=True)
-        self.linear_layer = linear_layer
-        self.aggregation_layer = aggregation_layer
-        self.activation_layer = activation_layeractivation_layer
+        self.manifold = manifold
+        self.c = tf.Variable([c], trainable=False)
+        self.linear_layer = LinearHyperbolic(input_size, self.manifold, self.c, activation=None)
+        self.aggregation_layer = HyperbolicAggregation(self.manifold, self.c)
+        self.activation_layer = ActivationHyperbolic(self.manifold, self.c, self.c, activation)
 
     def call(self, inputs):
         # Step 1 (hyperbolic feature transform)
@@ -38,6 +39,39 @@ class HGCLayer(keras.Layer):
         # Step 3 (non-linear activation with different curvatures)
         x = activation_layer(x)
 
+
+
+        return x
+
+
+class HGCN(keras.Model):
+
+    def __init__(self, input_size, dropout=0.4):
+        super().__init__()
+
+        self.input_size = input_size
+
+        self.manifold = Lorentz()
+        self.c_map = tf.Variable([0.4], trainable=False)
+        self.c0 = tf.Variable([0.4], trainable=False)
+        self.c1 = tf.Variable([0.4], trainable=False)
+        self.c2 = tf.Variable([0.4], trainable=False)
+
+        self.conv0 = HGCLayer(self.input_size, self.manifold, self.c0, self.c1, activation="relu")
+        self.conv1 = HGCLayer(self.input_size, self.manifold, self.c1, self.c2, activation="relu")
+        self.conv2 = HGCLayer(self.input_size, self.manifold, self.c1, self.c2, activation="relu")
+
+    def call(self, inputs):
+        x, adj = inputs
+        # Map euclidean features to Hyperbolic space
+        x = self.manifold.expmap0(x, c=self.c_map)
+        # Stack multiple hyperbolic graph convolution layers
+        x, adj = self.conv0((x, adj))
+        x, adj = self.conv1((x, adj))
+        x, adj = self.conv2((x, adj))
+
+        # TODO - add link prediction/node classification code as described
+        # in the notes below
         # Notes
         # Note 1:  Hyperbolic embeddings at the last layer can then be used to predict node attributes or links
         # Note 2: For link prediction we use the Fermi-Dirac decoder , a generalization of sigmoid,
@@ -49,15 +83,4 @@ class HGCLayer(keras.Layer):
         #         This method performs similarly to Euclidean classification. Finally, we also add a link prediction
         #         regularization objective in node classification tasks, to encourage embeddings at the last layer to
         #         preserve the graph structure
-
-        return x
-
-
-class HGCN(keras.Model):
-
-
-    def call(self, inputs):
-
-        # Map euclidean features to Hyperbolic space
-
-        # Stack multiple hyperbolic graph convolution layers
+        return
