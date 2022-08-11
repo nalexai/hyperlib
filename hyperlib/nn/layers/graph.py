@@ -39,17 +39,18 @@ class HGCLayer(keras.layers.Layer):
         # Step 3 (non-linear activation with different curvatures)
         x = activation_layer(x)
 
-
-
         return x
 
 
-class HGCN(keras.Model):
+class HGCNLP(keras.Model):
 
-    def __init__(self, input_size, dropout=0.4):
+    def __init__(self, input_size, r, t, dropout=0.4):
         super().__init__()
 
         self.input_size = input_size
+
+        self.r = r
+        self.t = t
 
         self.manifold = Lorentz()
         self.c_map = tf.Variable([0.4], trainable=False)
@@ -84,3 +85,10 @@ class HGCN(keras.Model):
         #         regularization objective in node classification tasks, to encourage embeddings at the last layer to
         #         preserve the graph structure
         return
+
+
+    def decode(self, emb_in, emb_out):
+        sqdist = self.manifold.sqdist(emb_in, emb_out, self.c)
+        # fermi dirac to comput edge probabilities
+        1. / (tf.exp((sqdist - self.r) / self.t) + 1.0)
+        return probs

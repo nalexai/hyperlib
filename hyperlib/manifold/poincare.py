@@ -121,7 +121,7 @@ class Poincare(Manifold):
         projected = x / norm * maxnorm
         return tf.where(cond, projected, x)
 
-    def mobius_add(self, x, y, c):
+    def mobius_add(self, x, y, c, axis=-1):
         """Element-wise Mobius addition.
       Args:
         x: Tensor of size B x dimension representing hyperbolic points.
@@ -131,9 +131,9 @@ class Poincare(Manifold):
         Tensor of shape B x dimension representing the element-wise Mobius addition
         of x and y.
       """
-        cx2 = c * tf.reduce_sum(x * x, axis=-1, keepdims=True)
-        cy2 = c * tf.reduce_sum(y * y, axis=-1, keepdims=True)
-        cxy = c * tf.reduce_sum(x * y, axis=-1, keepdims=True)
+        cx2 = c * tf.reduce_sum(x * x, axis=axis, keepdims=True)
+        cy2 = c * tf.reduce_sum(y * y, axis=axis, keepdims=True)
+        cxy = c * tf.reduce_sum(x * y, axis=axis, keepdims=True)
         num = (1 + 2 * cxy + cy2) * x + (1 - cx2) * y
         denom = 1 + 2 * cxy + cx2 * cy2
         return self.proj(num / tf.maximum(denom, self.min_norm), c)
@@ -159,3 +159,11 @@ class Poincare(Manifold):
         scores = (1. / denom) * scores
         return scores
 
+    def sqdist(self, p1, p2, c):
+        sqrt_c = c ** 0.5
+        dist_c = atanh(
+            sqrt_c * self.mobius_add(-p1, p2, c, dim=-1)
+        )
+        dist_c = tf.norm(dist_c, axis=-1, ord=2, keepdim=False)
+        dist = dist_c * 2 / sqrt_c
+        return dist ** 2
