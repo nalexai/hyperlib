@@ -182,8 +182,8 @@ class Lorentz(Manifold):
     def sqdist(self, x, y, c):
         K = 1. / c
         prod = self.minkowski_dot(x, y)
-        theta = tf.clip_by_value(-prod / K, clip_value_min=1.0 + self.eps[x.dtype]), clip_value_max=tf.math.reduce_max(-prod / K))
+        theta = tf.clip_by_value(-prod / K, clip_value_min=1.0 + self.eps[x.dtype], clip_value_max=tf.math.reduce_max(-prod / K))
         sqdist = K * arcosh(theta) ** 2
         # clamp distance to avoid nans in Fermi-Dirac decoder
-        res = tf.clip_by_value(sqdist. clip_value_min= tf.math.reduce_min(sqdist), clip_value_max=50.0)
+        res = tf.clip_by_value(sqdist, clip_value_min= tf.math.reduce_min(sqdist), clip_value_max=50.0)
         return res

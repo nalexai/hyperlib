@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 from .linear import LinearHyperbolic, ActivationHyperbolic
-
+from hyperlib.manifold.lorentz import Lorentz
 
 class HyperbolicAggregation(keras.layers.Layer):
 
@@ -33,24 +33,21 @@ class HGCLayer(keras.layers.Layer):
         x = self.manifold.logmap0(x, c=self.c)
 
         # Step 2 (attention-based neighborhood aggregation)
-        x = linear(inputs)
-        x = aggregation_layer((x, adj))
+        x = self.linear_layer(inputs)
+        x = self.aggregation_layer((x, adj))
 
         # Step 3 (non-linear activation with different curvatures)
-        x = activation_layer(x)
+        x = self.activation_layer(x)
 
         return x
 
 
 class HGCNLP(keras.Model):
 
-    def __init__(self, input_size, r, t, dropout=0.4):
+    def __init__(self, input_size, dropout=0.4):
         super().__init__()
 
         self.input_size = input_size
-
-        self.r = r
-        self.t = t
 
         self.manifold = Lorentz()
         self.c_map = tf.Variable([0.4], trainable=False)
@@ -58,9 +55,9 @@ class HGCNLP(keras.Model):
         self.c1 = tf.Variable([0.4], trainable=False)
         self.c2 = tf.Variable([0.4], trainable=False)
 
-        self.conv0 = HGCLayer(self.input_size, self.manifold, self.c0, self.c1, activation="relu")
-        self.conv1 = HGCLayer(self.input_size, self.manifold, self.c1, self.c2, activation="relu")
-        self.conv2 = HGCLayer(self.input_size, self.manifold, self.c1, self.c2, activation="relu")
+        self.conv0 = HGCLayer(self.manifold, self.input_size, self.c0, activation="relu")
+        self.conv1 = HGCLayer(self.manifold, self.input_size, self.c0, activation="relu")
+        self.conv2 = HGCLayer(self.manifold, self.input_size, self.c0, activation="relu")
 
     def call(self, inputs):
         x, adj = inputs
