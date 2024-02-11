@@ -7,7 +7,7 @@ class RSGD(keras.optimizers.Optimizer):
     Implmentation of a Riemannian Stochastic Gradient Descent. This class inherits form the keras Optimizer class.
     """
 
-    def __init__(self, learning_rate=0.01, name="SGOptimizer", **kwargs):
+    def __init__(self, learning_rate=0.01, name="RSGOptimizer", **kwargs):
         """Call super().__init__() and use _set_hyper() to store hyperparameters"""
         super().__init__(name, **kwargs)
         self._set_hyper(
@@ -41,6 +41,9 @@ class RSGD(keras.optimizers.Optimizer):
         # assign new weights
 
         var.assign(new_var_m)
+
+    def _resource_apply_sparse(self, grad, var):
+        raise NotImplementedError("Not implemented")
 
     def rgrad(self, var, grads):
         """
