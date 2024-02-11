@@ -100,6 +100,7 @@ class Lorentz(Manifold):
 
     def expmap0(self, u, c):
         """Maps vector u in the tangent space at zero onto the manifold"""
+        print('x shape empmap0', u.shape)
         K = 1. / c
         sqrtK = K ** 0.5
         d = u.shape[-1]

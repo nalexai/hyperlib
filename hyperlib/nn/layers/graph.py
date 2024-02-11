@@ -3,6 +3,7 @@ from tensorflow import keras
 
 from .linear import LinearHyperbolic, ActivationHyperbolic
 from hyperlib.manifold.lorentz import Lorentz
+from hyperlib.manifold.poincare import Poincare
 
 class HyperbolicAggregation(keras.layers.Layer):
 
@@ -14,6 +15,7 @@ class HyperbolicAggregation(keras.layers.Layer):
     def call(self, inputs):
         x_tangent, adj = inputs
         support_t = tf.sparse.sparse_dense_matmul(adj, x_tangent)
+        #support_t = tf.linalg.matmul(adj, x_tangent)
         output = self.manifold.proj(self.manifold.expmap0(support_t, c=self.c), c=self.c)
         return output
 
@@ -23,7 +25,8 @@ class HGCLayer(keras.layers.Layer):
 
         self.manifold = manifold
         self.c = tf.Variable([c], trainable=False)
-        self.linear_layer = LinearHyperbolic(input_size, self.manifold, self.c, activation=None)
+        #self.linear_layer = LinearHyperbolic(input_size, self.manifold, self.c, activation=None)
+        self.linear_layer = LinearHyperbolic(1433, self.manifold, 1.0, activation=None)
         self.aggregation_layer = HyperbolicAggregation(self.manifold, self.c)
         self.activation_layer = ActivationHyperbolic(self.manifold, self.c, self.c, activation)
 
@@ -33,7 +36,8 @@ class HGCLayer(keras.layers.Layer):
         x = self.manifold.logmap0(x, c=self.c)
 
         # Step 2 (attention-based neighborhood aggregation)
-        x = self.linear_layer(inputs)
+        print('HGCLayer x shape', x.shape)
+        x = self.linear_layer(x)
         x = self.aggregation_layer((x, adj))
 
         # Step 3 (non-linear activation with different curvatures)
@@ -61,6 +65,7 @@ class HGCNLP(keras.Model):
 
     def call(self, inputs):
         x, adj = inputs
+        print('HGCNLP x shape', x.shape)
         # Map euclidean features to Hyperbolic space
         x = self.manifold.expmap0(x, c=self.c_map)
         # Stack multiple hyperbolic graph convolution layers

@@ -40,7 +40,7 @@ class LinearHyperbolic(keras.layers.Layer):
         inputs = tf.cast(inputs, tf.float64)
         mv = self.manifold.mobius_matvec(self.kernel, inputs, self.c)
         res = self.manifold.proj(mv, c=self.c)
-
+        print('LinearHyperbolic x shape', inputs.shape)
         if self.use_bias:
             hyp_bias = self.manifold.expmap0(self.bias, c=self.c)
             hyp_bias = self.manifold.proj(hyp_bias, c=self.c)
