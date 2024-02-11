@@ -5,6 +5,7 @@ from .linear import LinearHyperbolic, ActivationHyperbolic
 from hyperlib.manifold.lorentz import Lorentz
 from hyperlib.manifold.poincare import Poincare
 
+
 class HyperbolicAggregation(keras.layers.Layer):
 
     def __init__(self, manifold, c):
@@ -18,6 +19,7 @@ class HyperbolicAggregation(keras.layers.Layer):
         #support_t = tf.linalg.matmul(adj, x_tangent)
         output = self.manifold.proj(self.manifold.expmap0(support_t, c=self.c), c=self.c)
         return output
+
 
 class HGCLayer(keras.layers.Layer):
     def __init__(self, manifold, input_size, c, activation):
@@ -87,7 +89,6 @@ class HGCNLP(keras.Model):
         #         regularization objective in node classification tasks, to encourage embeddings at the last layer to
         #         preserve the graph structure
         return
-
 
     def decode(self, emb_in, emb_out):
         sqdist = self.manifold.sqdist(emb_in, emb_out, self.c)
