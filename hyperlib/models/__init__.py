@@ -40,7 +40,7 @@ class HGCN(tf.keras.Model):
         return self.embedding(indices)
 
     def get_embeddings(self):
-        embeddings = self.embedding (tf.constant([i for i in range(len(self.vocab))]))
+        embeddings = self.embedding(tf.constant([i for i in range(len(self.vocab))]))
         embeddings_copy = tf.identity(embeddings)
         embeddings_hyperbolic = self.manifold.expmap0(embeddings_copy, c=self.c)
         return embeddings_hyperbolic

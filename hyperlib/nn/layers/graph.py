@@ -27,8 +27,8 @@ class HGCLayer(keras.layers.Layer):
 
         self.manifold = manifold
         self.c = tf.Variable([c], trainable=False)
-        #self.linear_layer = LinearHyperbolic(input_size, self.manifold, self.c, activation=None)
-        self.linear_layer = LinearHyperbolic(1433, self.manifold, 1.0, activation=None)
+        self.linear_layer = LinearHyperbolic(input_size, self.manifold, self.c, activation=None)
+        #self.linear_layer = LinearHyperbolic(1433, self.manifold, 1.0, activation=None)
         self.aggregation_layer = HyperbolicAggregation(self.manifold, self.c)
         self.activation_layer = ActivationHyperbolic(self.manifold, self.c, self.c, activation)
 
