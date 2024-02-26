@@ -40,7 +40,7 @@ class LinearHyperbolic(keras.layers.Layer):
         inputs = tf.cast(inputs, tf.float64)
         mv = self.manifold.mobius_matvec(self.kernel, inputs, self.c)
         res = self.manifold.proj(mv, c=self.c)
-
+        print('LinearHyperbolic x shape', inputs.shape)
         if self.use_bias:
             hyp_bias = self.manifold.expmap0(self.bias, c=self.c)
             hyp_bias = self.manifold.proj(hyp_bias, c=self.c)
@@ -57,4 +57,29 @@ class LinearHyperbolic(keras.layers.Layer):
             "activation": keras.activations.serialize(self.activation),
             "manifold": self.manifold,
             "curvature": self.c
+        }
+
+class ActivationHyperbolic(keras.layers.Layer):
+    def __init__(self, manifold, c_in, c_out, activation):
+        super().__init__()
+        self.activation = keras.activations.get(activation)
+        self.c_in = c_in
+        self.c_out = c_out
+        self.manifold = manifold
+
+    def build(self, input_shape):
+        self.built = True
+
+    def call(self, inputs):
+        inputs_tan = self.activation(self.manifold.logmap0(inputs, c=self.c_in))
+        inputs_tan = self.manifold.proj_tan0(inputs_tan, self.activation(inputs))
+        out = self.manifold.expmap0(inputs_tan, c=self.c_out)
+        return self.manifold.proj(out, c=self.c_out)
+
+    def get_config(self):
+        return {
+            "activation": keras.activations.serialize(self.activation),
+            "c_in": self.c_in,
+            "c_out": self.c_out,
+            "manifold": self.manifold.name,
         }

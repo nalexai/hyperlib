@@ -1,7 +1,7 @@
 import tensorflow as tf
 from hyperlib.manifold import poincare
 from hyperlib.utils import functional as F
-from hyperlib.nn.layers import lin_hyp, dense_attention
+from hyperlib.nn.layers import linear, dense_attention
 from hyperlib.nn.optimizers import rsgd
 import pytest
 
@@ -54,7 +54,7 @@ class TestClass:
         assert manifold.min_norm == 1e-15
 
     def test_create_layer(self, units=32):
-        hyp_layer = lin_hyp.LinearHyperbolic(
+        hyp_layer = linear.LinearHyperbolic(
             units, self.poincare_manifold, 1.0 
         )
         assert hyp_layer.units == units
@@ -73,14 +73,14 @@ class TestClass:
 
     def test_layer_training(self, units=32):
         x_input = tf.zeros([units, 1])
-        hyp_layer = lin_hyp.LinearHyperbolic(
+        hyp_layer = linear.LinearHyperbolic(
             units, self.poincare_manifold, 1.0 
         )
         output = hyp_layer(x_input)
 
     def test_layer_training_with_bias(self, units=32):
         x_input = tf.zeros([units, 1])
-        hyp_layer = lin_hyp.LinearHyperbolic(
+        hyp_layer = linear.LinearHyperbolic(
             units, self.poincare_manifold, 1.0, use_bias=True
         )
         output = hyp_layer(x_input)
