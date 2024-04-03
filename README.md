@@ -5,7 +5,7 @@
 ## Background
 This library implements common Neural Network components in the hyperbolic space (using the Poincare model). The implementation of this library uses Tensorflow as a backend and can easily be used with Keras and is meant to help Data Scientists, Machine Learning Engineers, Researchers and others to implement hyperbolic neural networks.
 
-You can also use this library for uses other than neural networks by using the mathematical functions available in the Poincare class. In the future we may implement components that can be used in models other than neural networks. You can learn more about Hyperbolic networks [here](https://www.nalex.ai/post/hyperlib-deep-learning-in-the-hyperbolic-space), and in the references[^1] [^2] [^3] [^4].
+You can also use this library for uses other than neural networks by using the mathematical functions available in the Poincare class. In the future we may implement components that can be used in models other than neural networks. You can learn more about Hyperbolic networks [here](https://elevateailabs.com/blog/hyperlib), and in the references[^1] [^2] [^3] [^4].
 
 ## Install
 The recommended way to install is with pip
