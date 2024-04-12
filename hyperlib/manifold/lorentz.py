@@ -7,7 +7,7 @@ from ..utils.functional import cosh, sinh, arcosh
 class Lorentz(Manifold):
     """
     Implementation of the Lorentz/Hyperboloid manifold defined by
-    :math: `L = \{ x \in R^d | -x_0^2 + x_1^2 + ... + x_d^2 = -K \}`, 
+    :math: `L = \{ x \in R^d | -x_0^2 + x_1^2 + ... + x_d^2 = -K \}`,
     where c = 1 / K is the hyperbolic curvature and d is the manifold dimension.
 
     The point :math: `( \sqrt{K}, 0, \dots, 0 )` is referred to as "zero".
@@ -35,7 +35,7 @@ class Lorentz(Manifold):
     def dist_squared(self, x, y, c):
         """Squared hyperbolic distance between x, y"""
         K = 1. / c
-        theta = tf.clip_by_value( -self.minkowski_dot(x, y) / K, 
+        theta = tf.clip_by_value( -self.minkowski_dot(x, y) / K,
             clip_value_min=1.0 + self.eps[x.dtype], clip_value_max=self.max_norm)
         return K * arcosh(theta)**2
 
@@ -44,9 +44,9 @@ class Lorentz(Manifold):
         K = 1. / c
         d1 = x.shape[-1]
         y = x[:,1:d1]
-        y_sqnorm = tf.math.square( 
+        y_sqnorm = tf.math.square(
             tf.norm(y, ord=2, axis=1, keepdims=True))
-        t = tf.clip_by_value(K + y_sqnorm, 
+        t = tf.clip_by_value(K + y_sqnorm,
             clip_value_min=self.eps[x.dtype],
             clip_value_max=self.max_norm
         )
@@ -70,7 +70,7 @@ class Lorentz(Manifold):
         return tf.concat([z, ud], axis=1)
 
     def expmap(self, u, x, c):
-        """Maps vector u in the tangent space at x onto the manifold""" 
+        """Maps vector u in the tangent space at x onto the manifold"""
         K = 1. / c
         sqrtK = K ** 0.5
         normu = self.minkowski_norm(u)
@@ -83,8 +83,8 @@ class Lorentz(Manifold):
     def logmap(self, y, x, c):
         """Maps point y in the manifold to the tangent space at x"""
         K = 1. / c
-        xy = tf.clip_by_value(self.minkowski_dot(x, y) + K, 
-            clip_value_min=-self.max_norm, clip_value_max=-self.eps[x.dtype]) 
+        xy = tf.clip_by_value(self.minkowski_dot(x, y) + K,
+            clip_value_min=-self.max_norm, clip_value_max=-self.eps[x.dtype])
         xy -= K
         u = y + xy * x * c
         normu = self.minkowski_norm(u)
@@ -99,7 +99,8 @@ class Lorentz(Manifold):
         return self.proj(self.expmap0(xt, c=c_out), c=c_out)
 
     def expmap0(self, u, c):
-        """Maps vector u in the tangent space at zero onto the manifold""" 
+        """Maps vector u in the tangent space at zero onto the manifold"""
+        print('x shape empmap0', u.shape)
         K = 1. / c
         sqrtK = K ** 0.5
         d = u.shape[-1]
@@ -125,10 +126,16 @@ class Lorentz(Manifold):
         y = tf.reshape(x[:,1:], [-1, d-1])
         y_norm = tf.norm(y, ord=2, axis=1, keepdims=True)
         y_norm = self.clip_norm(y_norm)
-        theta = tf.clip_by_value(x[:, 0:1] / sqrtK, 
-            clip_value_min=1.0+self.eps[x.dtype], clip_value_max=self.max_norm)
+
+        theta = tf.clip_by_value(
+            x[:, 0:1] / sqrtK,
+            clip_value_min=1.0+self.eps[x.dtype],
+            clip_value_max=self.max_norm
+        )
+        
         res = sqrtK * arcosh(theta) * y / y_norm
-        zeros = tf.zeros((b,1), dtype=res.dtype)
+        
+        zeros = tf.zeros((b, 1), dtype=res.dtype)
         return tf.concat([zeros, res], axis=1)
 
     def mobius_add(self, x, y, c):
@@ -138,7 +145,7 @@ class Lorentz(Manifold):
 
     def mobius_matvec(self, m, x, c):
         u = self.logmap0(x, c)
-        mu = u @ m 
+        mu = u @ m
         return self.expmap0(mu, c)
 
     def ptransp(self, x, y, u, c):
@@ -178,3 +185,12 @@ class Lorentz(Manifold):
 
     def clip_norm(self, x):
         return tf.clip_by_value(x, clip_value_min=self.min_norm, clip_value_max=self.max_norm)
+
+    def sqdist(self, x, y, c):
+        K = 1. / c
+        prod = self.minkowski_dot(x, y)
+        theta = tf.clip_by_value(-prod / K, clip_value_min=1.0 + self.eps[x.dtype], clip_value_max=tf.math.reduce_max(-prod / K))
+        sqdist = K * arcosh(theta) ** 2
+        # clamp distance to avoid nans in Fermi-Dirac decoder
+        res = tf.clip_by_value(sqdist, clip_value_min= tf.math.reduce_min(sqdist), clip_value_max=50.0)
+        return res
