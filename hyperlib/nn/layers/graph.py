@@ -35,7 +35,7 @@ class HGCLayer(keras.layers.Layer):
     def call(self, inputs):
         # Step 1 (hyperbolic feature transform)
         x, adj = inputs
-        x = self.manifold.logmap0(x, c=self.c)
+        # x = self.manifold.logmap0(x, c=self.c)
 
         # Step 2 (attention-based neighborhood aggregation)
         print('HGCLayer x shape', x.shape)
@@ -67,13 +67,15 @@ class HGCNLP(keras.Model):
 
     def call(self, inputs):
         x, adj = inputs
-        print('HGCNLP x shape', x.shape)
+        x_tan = self.manifold.proj_tan0(x, self.c1)
+        x_hyp = self.manifold.expmap0(x_tan, c=self.c1)
+        x_hyp = self.manifold.proj(x_hyp, c=self.c1)
         # Map euclidean features to Hyperbolic space
-        x = self.manifold.expmap0(x, c=self.c_map)
+        #x = self.manifold.expmap0(x, c=self.c_map)
         # Stack multiple hyperbolic graph convolution layers
         x, adj = self.conv0((x, adj))
-        x, adj = self.conv1((x, adj))
-        x, adj = self.conv2((x, adj))
+        #x, adj = self.conv1((x, adj))
+        #x, adj = self.conv2((x, adj))
 
         # TODO - add link prediction/node classification code as described
         # in the notes below

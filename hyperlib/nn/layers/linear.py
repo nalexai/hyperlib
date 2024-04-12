@@ -7,13 +7,14 @@ class LinearHyperbolic(keras.layers.Layer):
     Implementation of a hyperbolic linear layer for a neural network, that inherits from the keras Layer class
     """
 
-    def __init__(self, units, manifold, c, activation=None, use_bias=True):
+    def __init__(self, units, manifold, c, use_activation=False, activation=None, use_bias=False):
         super().__init__()
         self.units = units
         self.c = tf.Variable([c], dtype="float64")
         self.manifold = manifold
         self.activation = keras.activations.get(activation)
         self.use_bias = use_bias
+        self.use_activation = use_activation
 
     def build(self, batch_input_shape):
         w_init = tf.random_normal_initializer()
@@ -47,7 +48,9 @@ class LinearHyperbolic(keras.layers.Layer):
             res = self.manifold.mobius_add(res, hyp_bias, c=self.c)
             res = self.manifold.proj(res, c=self.c)
 
-        return self.activation(res)
+        if self.use_activation:
+            self.activation(res)
+        return res
 
     def get_config(self):
         base_config = super().get_config()

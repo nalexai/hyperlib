@@ -126,10 +126,16 @@ class Lorentz(Manifold):
         y = tf.reshape(x[:,1:], [-1, d-1])
         y_norm = tf.norm(y, ord=2, axis=1, keepdims=True)
         y_norm = self.clip_norm(y_norm)
-        theta = tf.clip_by_value(x[:, 0:1] / sqrtK,
-            clip_value_min=1.0+self.eps[x.dtype], clip_value_max=self.max_norm)
+
+        theta = tf.clip_by_value(
+            x[:, 0:1] / sqrtK,
+            clip_value_min=1.0+self.eps[x.dtype],
+            clip_value_max=self.max_norm
+        )
+        
         res = sqrtK * arcosh(theta) * y / y_norm
-        zeros = tf.zeros((b,1), dtype=res.dtype)
+        
+        zeros = tf.zeros((b, 1), dtype=res.dtype)
         return tf.concat([zeros, res], axis=1)
 
     def mobius_add(self, x, y, c):
